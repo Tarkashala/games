@@ -1,0 +1,596 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Countables Mass Conversion Game</title>
+
+<style>
+:root{
+  --primary:#2563eb;
+  --primary-light:#eff6ff;
+  --primary-border:#3b82f6;
+  --success:#059669;
+  --danger:#dc2626;
+  --slate-700:#334155;
+  --slate-800:#1e293b;
+  --bg:#f1f5f9;
+  --card-bg:#ffffff;
+  --accent:#7c3aed;
+}
+
+*{
+  box-sizing:border-box;
+}
+
+body{
+  margin:0;
+  padding:20px;
+  font-family:"Segoe UI",system-ui,-apple-system,sans-serif;
+  background:var(--bg);
+  color:var(--slate-800);
+  line-height:1.7;
+}
+
+.card{
+  max-width:1050px;
+  margin:0 auto;
+  background:var(--card-bg);
+  border-radius:20px;
+  padding:30px;
+  box-shadow:0 15px 35px rgba(0,0,0,0.1);
+  border-top:8px solid var(--primary);
+}
+
+.progress-header{
+  display:flex;
+  justify-content:space-between;
+  color:#64748b;
+  font-weight:800;
+  font-size:13px;
+  letter-spacing:1px;
+  margin-bottom:20px;
+  gap:10px;
+  flex-wrap:wrap;
+}
+
+.q-box{
+  background:var(--primary-light);
+  padding:30px;
+  border-radius:15px;
+  border-left:6px solid var(--primary);
+  margin-bottom:30px;
+}
+
+.q-text{
+  font-size:24px;
+  font-weight:700;
+  color:#1e3a8a;
+  line-height:1.5;
+}
+
+.step{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:20px;
+  overflow-x:auto;
+}
+
+.step-title{
+  color:var(--accent);
+  font-weight:800;
+  margin-bottom:15px;
+  font-size:20px;
+  display:flex;
+  align-items:center;
+  gap:8px;
+}
+
+.math-display{
+  font-family:"Courier New",monospace;
+  font-size:1.1rem;
+  padding:15px;
+  background:#f8fafc;
+  border-radius:8px;
+  border:1px solid #e2e8f0;
+  overflow-x:auto;
+  display:inline-flex;
+  align-items:center;
+  gap:10px;
+  flex-wrap:wrap;
+  margin: 10px 0;
+}
+
+.highlight-box{
+  background:#f8fafc;
+  padding:20px;
+  border-radius:8px;
+  border:1px solid #cbd5e1;
+  margin-top:15px;
+  font-size: 16px;
+}
+
+.cancel-unit {
+  text-decoration: line-through;
+  color: #ef4444;
+  font-weight: bold;
+}
+
+.fraction{
+  display:inline-flex;
+  flex-direction:column;
+  align-items:center;
+  vertical-align:middle;
+  margin: 0 8px;
+}
+
+.num{
+  border-bottom:2px solid #334155;
+  padding:0 8px 4px 8px;
+}
+
+.den{
+  padding:4px 8px 0 8px;
+}
+
+.math-bracket-container{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  background:#ffffff;
+  padding:24px;
+  border-radius:12px;
+  border:1px solid #cbd5e1;
+  font-family:'Courier New',monospace;
+  font-size:24px;
+  margin:16px 0;
+  width:fit-content;
+  max-width:100%;
+  overflow-x:auto;
+  box-shadow:inset 0 2px 4px rgba(0,0,0,0.02);
+}
+
+.mb-row{
+  display:flex;
+  align-items:flex-end;
+}
+
+.mb-left{
+  min-width:140px;
+  text-align:right;
+  padding-right:12px;
+  font-weight:bold;
+  color:#64748b;
+}
+
+.mb-right{
+  padding:4px 12px;
+  letter-spacing:2px;
+  white-space:nowrap;
+}
+
+.mb-quotient{
+  color:var(--primary);
+  font-weight:bold;
+}
+
+.mb-dividend{
+  border-top:2px solid var(--slate-800);
+  border-left:2px solid var(--slate-800);
+}
+
+.gd-steps-container{
+  width:100%;
+  margin-top:20px;
+  display:flex;
+  flex-direction:column;
+  gap:12px;
+}
+
+.gd-step{
+  background:#f1f5f9;
+  padding:16px 20px;
+  border-radius:8px;
+  font-size:17px;
+  border-left:4px solid #38bdf8;
+}
+
+.gd-badge{
+  background:#0f172a;
+  color:white;
+  padding:6px 12px;
+  border-radius:6px;
+  font-size:14px;
+  font-weight:bold;
+  margin-right:12px;
+}
+
+.gd-subtext {
+  display: block;
+  margin-top: 8px;
+  color: #475569;
+  font-size: 15px;
+}
+
+.final-box{
+  background:#ecfdf5;
+  border:2px solid #10b981;
+  padding:25px;
+  border-radius:15px;
+  margin-top:30px;
+}
+
+.btn-row{
+  display:flex;
+  gap:15px;
+  margin-top:30px;
+  flex-wrap:wrap;
+}
+
+button{
+  flex:1;
+  min-width:220px;
+  padding:18px;
+  border:none;
+  border-radius:12px;
+  font-weight:700;
+  cursor:pointer;
+  transition:0.2s;
+  font-size:16px;
+}
+
+.btn-next{
+  background:var(--success);
+  color:white;
+}
+
+.btn-exit{
+  background:#e2e8f0;
+  color:#475569;
+}
+
+button:hover{
+  filter:brightness(1.1);
+  transform:translateY(-2px);
+}
+
+.click-to-reveal{
+  text-align:center;
+  padding:40px;
+  border:3px dashed #cbd5e1;
+  border-radius:15px;
+  cursor:pointer;
+  color:#64748b;
+  font-weight:600;
+  transition: background 0.2s;
+}
+
+.click-to-reveal:hover {
+  background: #f8fafc;
+}
+
+@media(max-width:700px){
+  .q-text{ font-size:20px; }
+  .math-display{ font-size:0.95rem; }
+  .math-bracket-container{ font-size:16px; }
+}
+
+</style>
+</head>
+
+<body>
+
+<div class="card" id="game-container"></div>
+
+<script>
+
+(function(){
+
+"use strict";
+
+const items=[
+["electron",9.1093837015e-31], ["proton",1.67262192369e-27], ["neutron",1.67492749804e-27],
+["atomic mass unit",1.66053906660e-27], ["unified atomic mass unit",1.66053906660e-27],
+["deuteron",3.3435837724e-27], ["triton",5.0073567446e-27], ["alpha particle",6.6446573357e-27],
+["hydrogen atom",1.6735575e-27], ["helium atom",6.6464764e-27], ["lithium atom",1.15258e-26],
+["carbon-12 atom",1.99264687992e-26], ["nitrogen atom",2.3258671e-26], ["oxygen atom",2.6566962e-26],
+["sodium atom",3.8175407e-26], ["magnesium atom",4.0359398e-26], ["aluminium atom",4.4803895e-26],
+["silicon atom",4.6637066e-26], ["phosphorus atom",5.1433176e-26], ["sulfur atom",5.3245184e-26],
+["chlorine atom",5.8871086e-26], ["argon atom",6.6335209e-26], ["potassium atom",6.4924244e-26],
+["calcium atom",6.6572817e-26], ["iron atom",9.2732796e-26], ["copper atom",1.0552061e-25],
+["zinc atom",1.0858788e-25], ["silver atom",1.7912023e-25], ["gold atom",3.2706986e-25],
+["lead atom",3.4406412e-25], ["uranium atom",3.9525627e-25], ["water molecule",2.9915076e-26],
+["carbon dioxide molecule",7.306371e-26], ["methane molecule",2.6639156e-26], ["ammonia molecule",2.823246e-26],
+["ozone molecule",7.971e-26], ["glucose molecule",2.9915e-25], ["sucrose molecule",5.683e-25],
+["DNA base pair",1.08e-24], ["ATP molecule",8.5e-25], ["caffeine molecule",3.23e-25],
+["ethanol molecule",7.64e-26], ["benzene molecule",1.296e-25], ["sodium chloride molecule",9.704e-26],
+["insulin molecule",9.6e-24], ["hemoglobin molecule",1.07e-22], ["ribosome",4.3e-21],
+["coronavirus particle",1e-18], ["influenza virus",1e-18], ["HIV virion",1e-18],
+["bacteriophage T4",1e-16], ["E. coli bacterium",1e-15], ["yeast cell",4e-11],
+["red blood cell",2.7e-14], ["human sperm cell",3e-12], ["human egg cell",5e-7],
+["grain of sand",5e-7], ["rice grain",2e-5], ["wheat grain",3.5e-5],
+["sesame seed",3e-6], ["mustard seed",6e-6], ["poppy seed",5e-7],
+["coffee bean",1.5e-4], ["sugar crystal",6e-7], ["table salt crystal",1e-6],
+["snowflake",3e-6], ["raindrop",5e-5], ["dust particle",1e-9],
+["smoke particle",1e-12], ["pollen grain",1e-9], ["human hair strand",6e-7],
+["ant",3e-6], ["mosquito",2.5e-6], ["fruit fly",1e-6],
+["honeybee",1e-4], ["termite",3e-6], ["housefly",1.2e-5],
+["feather",8e-5], ["staple pin",5e-4], ["paper clip",1e-3],
+["staple",3e-5], ["sewing needle",5e-4], ["thumbtack",2e-4],
+["matchstick",1e-4], ["LEGO brick",2.5e-3], ["coin",2.5e-3],
+["playing card",1.8e-3], ["A4 paper sheet",5e-3], ["cotton ball",5e-4],
+["water droplet",5e-5], ["ping pong ball",2.7e-3], ["marble",5e-3],
+["grape",5e-3], ["peanut",1e-3], ["almond",1.2e-3],
+["cashew nut",1.5e-3], ["pea",3e-4], ["lentil",2e-5],
+["chickpea",3e-4], ["black peppercorn",5e-5]
+];
+
+const container=document.getElementById("game-container");
+
+let qNum=0;
+
+function sci(num){
+  if(num===0) return {m:0,e:0};
+  let e=Math.floor(Math.log10(Math.abs(num)));
+  let m=num/Math.pow(10,e);
+  if(Math.abs(m)>=10){ m/=10; e++; }
+  if(Math.abs(m)<1){ m*=10; e--; }
+  return {m,e};
+}
+
+function fmtSci(num,d=4){
+  const s=sci(num);
+  return `${s.m.toFixed(d).replace(/\.?0+$/,"")} × 10<sup>${s.e}</sup>`;
+}
+
+function plural(word){
+  if(word.endsWith("s")) return word;
+  return word+"s";
+}
+
+function generateLongDivision(num,den){
+  let q = num / den;
+  
+  let html=`
+  <div class="math-bracket-container">
+    <div class="mb-row">
+      <div class="mb-left"></div>
+      <div class="mb-right mb-quotient">${q.toFixed(5)}</div>
+    </div>
+    <div class="mb-row">
+      <div class="mb-left">${den}</div>
+      <div class="mb-right mb-dividend">${num}.00000</div>
+    </div>
+  </div>
+  <div class="gd-steps-container">
+  `;
+
+  let cur = num;
+  let initialDigit = Math.floor(cur / den);
+  let product = initialDigit * den;
+  let rem = cur - product;
+
+  html += `
+    <div class="gd-step">
+      <span class="gd-badge">Start</span> ${cur} ÷ ${den} = <b style="color:var(--primary); font-size:19px;">${initialDigit}</b>
+      <span class="gd-subtext">Subtract: ${cur} - (${initialDigit} × ${den}) = ${cur} - ${product} = <b>${rem}</b> (Initial Remainder)</span>
+    </div>
+  `;
+
+  cur = rem * 10;
+
+  for(let i=1;i<=5;i++){
+    let digit = Math.floor(cur / den);
+    let sub = digit * den;
+    let newRem = cur - sub;
+
+    html+=`
+    <div class="gd-step">
+      <span class="gd-badge">Step ${i}</span> Bring down 0 ➔ ${cur} ÷ ${den} = <b style="color:var(--primary); font-size:19px;">${digit}</b>
+      <span class="gd-subtext">Subtract: ${cur} - (${digit} × ${den}) = ${cur} - ${sub} = <b>${newRem}</b> (New Remainder)</span>
+    </div>
+    `;
+    cur = newRem * 10;
+  }
+
+  html+=`</div>`;
+  return html;
+}
+
+function nextQuestion(){
+  qNum++;
+  const item=items[Math.floor(Math.random()*items.length)];
+  const unitChoice=Math.random()<0.5 ? ["kilogram",1] : ["gram",1e-3];
+
+  const itemName=item[0];
+  const itemMass=item[1];
+  const targetUnit=unitChoice[0];
+  const targetMass=unitChoice[1];
+  const exactRatio=targetMass/itemMass;
+
+  const sItem=sci(itemMass);
+  const sTarget=sci(targetMass);
+  const exponentDifference=sTarget.e-sItem.e;
+  const mantissaRatio=sTarget.m/sItem.m;
+  const normalized=sci(mantissaRatio);
+  const finalMantissa=normalized.m.toFixed(4).replace(/\.?0+$/,'');
+  const finalExponent=exponentDifference+normalized.e;
+
+  container.innerHTML=`
+  <div class="progress-header">
+    <span>COUNTABLES MASS ANALYSIS</span>
+    <span>PROBLEM #${qNum}</span>
+  </div>
+  <div class="q-box">
+    <div class="q-text">
+    If the mass of 1 ${itemName} is <b>${fmtSci(itemMass,10)} kg</b>,<br><br>
+    how many <u>${plural(itemName)}</u> are present in exactly <b>1 ${targetUnit}</b>?
+    </div>
+  </div>
+  <div class="click-to-reveal" id="reveal-trigger">
+    ✨ Click here or press Space/Enter to reveal the complete, step-by-step solution
+  </div>
+  <div id="solution-area" style="display:none"></div>
+  `;
+
+  document.getElementById("reveal-trigger").onclick=()=>{
+    solve(itemName, itemMass, targetUnit, targetMass, exactRatio, sItem, sTarget, exponentDifference, mantissaRatio, normalized, finalMantissa, finalExponent);
+  };
+}
+
+function solve(itemName, itemMass, targetUnit, targetMass, exactRatio, sItem, sTarget, exponentDifference, mantissaRatio, normalized, finalMantissa, finalExponent){
+  document.getElementById("reveal-trigger").style.display="none";
+  const area=document.getElementById("solution-area");
+  area.style.display="block";
+
+  let approxNum=parseFloat(sTarget.m.toPrecision(5));
+  let approxDen=parseFloat(sItem.m.toPrecision(5));
+
+  let numDec=approxNum.toString().includes(".") ? approxNum.toString().split(".")[1].length : 0;
+  let denDec=approxDen.toString().includes(".") ? approxDen.toString().split(".")[1].length : 0;
+  let maxDec=Math.max(numDec,denDec);
+  let multiplier=Math.pow(10,maxDec);
+
+  let intNum=Math.round(approxNum*multiplier);
+  let intDen=Math.round(approxDen*multiplier);
+
+  // Normalization logic explanation
+  let shiftExplanation = "";
+  if (normalized.e === 0) {
+      shiftExplanation = `The value <b>${mantissaRatio.toFixed(5)}</b> is already between 1 and 10. <br>This means it is already in proper standard form, and the exponent requires no adjustment!`;
+  } else if (normalized.e < 0) {
+      shiftExplanation = `To put this in standard scientific notation, the mantissa must be between 1 and 10.<br><br>
+      We must move the decimal point <b>${Math.abs(normalized.e)} place(s) to the RIGHT</b> to change ${mantissaRatio.toFixed(5)} into <b>${finalMantissa}</b>.<br><br>
+      Because we made the decimal number <i>larger</i> (by a factor of 10<sup>${Math.abs(normalized.e)}</sup>), we must balance the scale by making the exponent <i>smaller</i>. <br>
+      Subtracting ${Math.abs(normalized.e)} from our exponent gives: ${exponentDifference} - ${Math.abs(normalized.e)} = <b>${finalExponent}</b>.`;
+  } else {
+      shiftExplanation = `To put this in standard scientific notation, the mantissa must be between 1 and 10.<br><br>
+      We must move the decimal point <b>${normalized.e} place(s) to the LEFT</b> to change ${mantissaRatio.toFixed(5)} into <b>${finalMantissa}</b>.<br><br>
+      Because we made the decimal number <i>smaller</i> (by dividing by 10<sup>${normalized.e}</sup>), we must balance the scale by making the exponent <i>larger</i>. <br>
+      Adding ${normalized.e} to our exponent gives: ${exponentDifference} + ${normalized.e} = <b>${finalExponent}</b>.`;
+  }
+
+  area.innerHTML=`
+  <div class="step">
+    <div class="step-title">Step 1: Write the Given Masses</div>
+    1 ${itemName} = <b>${fmtSci(itemMass,10)} kg</b><br>
+    1 ${targetUnit} = <b>${fmtSci(targetMass,10)} kg</b>
+  </div>
+
+  <div class="step">
+    <div class="step-title">Step 2: Set Up the Required Division (Unit Cancellation)</div>
+    To find how many items fit into our target, we divide the total target mass by the mass of a single item. Notice how the "kg" units cancel out, leaving us with a pure number!
+    <br><br>
+    <div class="math-display">
+      Number of ${plural(itemName)} = 
+      <div class="fraction">
+        <span class="num">${fmtSci(targetMass,10)} <span class="cancel-unit">kg</span></span>
+        <span class="den">${fmtSci(itemMass,10)} <span class="cancel-unit">kg</span></span>
+      </div>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title">Step 3: Separate Mantissas and Apply Exponent Rules</div>
+    We can group the decimal numbers (mantissas) together and the powers of 10 together. 
+    <br>
+    <i>Remember the Exponent Quotient Rule: When dividing identical bases, subtract the bottom exponent from the top exponent.</i> 
+    <br><br>
+    <div style="background:#e0f2fe; padding: 10px 15px; border-radius: 8px; display: inline-block; font-weight: bold; border: 1px dashed #0284c7; margin-bottom: 15px;">
+      10<sup>A</sup> ÷ 10<sup>B</sup> = 10<sup>A - B</sup>
+    </div>
+    <br>
+    <div class="math-display">
+      ( ${sTarget.m.toFixed(5)} ÷ ${sItem.m.toFixed(5)} ) × 10<sup>${sTarget.e} - (${sItem.e})</sup>
+    </div>
+    <br>
+    <div class="math-display">
+      = ( ${sTarget.m.toFixed(5)} ÷ ${sItem.m.toFixed(5)} ) × 10<sup>${exponentDifference}</sup>
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title">Step 4: Remove Decimals for Easier Long Division</div>
+    Dividing by long decimals is very tedious. To make it easier, we approximate our mantissas to 5 significant digits and multiply both the numerator and denominator by <b>${multiplier}</b>. 
+    <br><br>
+    This moves the decimal point out of the way, turning our problem into simple whole numbers without changing the fraction's actual value!
+    <div class="highlight-box">
+      <b>Numerator:</b> ${approxNum} × ${multiplier} = <b>${intNum}</b><br>
+      <b>Denominator:</b> ${approxDen} × ${multiplier} = <b>${intDen}</b><br><br>
+      <b>New Clean Division:</b> ${intNum} ÷ ${intDen}
+    </div>
+  </div>
+
+  <div class="step">
+    <div class="step-title">Step 5: Perform Graphical Long Division</div>
+    Now we divide our clean integers. We will find the integer quotient first, and then bring down zeros to find the decimal expansion.
+    ${generateLongDivision(intNum,intDen)}
+    <br>
+    Intermediate Mantissa Result = <b>${mantissaRatio.toFixed(5)}</b>
+  </div>
+
+  <div class="step">
+    <div class="step-title">Step 6: Balance and Convert into Proper Scientific Notation</div>
+    Combining our division result with our power of 10 from Step 3, we get an intermediate result of:
+    <div class="math-display" style="background:#fef3c7; border-color:#f59e0b;">
+      ${mantissaRatio.toFixed(5)} × 10<sup>${exponentDifference}</sup>
+    </div>
+    <br>
+    ${shiftExplanation}
+    <br><br>
+    Therefore, the final standard form is:
+    <div class="math-display" style="background:#dcfce7; border-color:#10b981;">
+      ${finalMantissa} × 10<sup>${finalExponent}</sup>
+    </div>
+  </div>
+
+  <div class="final-box">
+    <div class="step-title" style="color:var(--success)">Final Verified Solution</div>
+    <div style="font-size:22px; font-weight:800; margin-bottom: 10px;">
+      Number of ${plural(itemName)} in 1 ${targetUnit} = ${finalMantissa} × 10<sup>${finalExponent}</sup>
+    </div>
+    <span style="font-size:14px; color:#475569;">Exact Calculator Check (Unrounded): ${exactRatio.toExponential(10)}</span>
+  </div>
+
+  <div class="btn-row">
+    <button class="btn-next" id="btn-next">Next Question (Y)</button>
+    <button class="btn-exit" id="btn-exit">Exit (N)</button>
+  </div>
+  `;
+
+  document.getElementById("btn-next").onclick=nextQuestion;
+  document.getElementById("btn-exit").onclick=()=>{
+    container.innerHTML=`
+    <div class="q-box" style="background:#fef2f2; border-left:6px solid var(--danger);">
+      <div class="q-text" style="color:#991b1b;">Session Complete</div>
+    </div>
+    <div class="step">Reload the page to restart the gameplay loop.</div>
+    `;
+  };
+}
+
+window.addEventListener("keydown",(e)=>{
+  const reveal=document.getElementById("reveal-trigger");
+  if((e.key==="Enter" || e.key===" ") && reveal && reveal.style.display!=="none"){
+    e.preventDefault();
+    reveal.click();
+  }
+  if(e.key.toLowerCase()==="y"){
+    const btn=document.getElementById("btn-next");
+    if(btn) btn.click();
+  }
+  if(e.key.toLowerCase()==="n"){
+    const btn=document.getElementById("btn-exit");
+    if(btn) btn.click();
+  }
+});
+
+nextQuestion();
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,914 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>SI ↔ CGS Dimensional Conversion Master Game</title>
+
+<style>
+:root{
+  --primary:#2563eb;
+  --primary-light:#eff6ff;
+  --success:#059669;
+  --danger:#dc2626;
+  --bg:#f1f5f9;
+  --card:#ffffff;
+  --accent:#7c3aed;
+}
+body{
+  margin:0;
+  padding:20px;
+  font-family:"Segoe UI",system-ui,sans-serif;
+  background:var(--bg);
+  color:#1e293b;
+}
+.card{
+  max-width:1100px;
+  margin:0 auto;
+  background:var(--card);
+  border-radius:20px;
+  padding:30px;
+  box-shadow:0 15px 35px rgba(0,0,0,0.1);
+  border-top:8px solid var(--primary);
+}
+.progress{
+  display:flex;
+  justify-content:space-between;
+  font-weight:800;
+  color:#64748b;
+  margin-bottom:20px;
+  font-size:13px;
+  letter-spacing:1px;
+}
+.qbox{
+  background:var(--primary-light);
+  border-left:6px solid var(--primary);
+  border-radius:15px;
+  padding:30px;
+  margin-bottom:30px;
+}
+.qtext{
+  font-size:24px;
+  font-weight:700;
+  color:#1e3a8a;
+  line-height:1.5;
+}
+.click{
+  text-align:center;
+  padding:40px;
+  border:3px dashed #cbd5e1;
+  border-radius:15px;
+  cursor:pointer;
+  color:#64748b;
+  font-weight:700;
+}
+.step{
+  background:#fff;
+  border:1px solid #e2e8f0;
+  border-radius:12px;
+  padding:20px;
+  margin-bottom:20px;
+}
+.title{
+  color:var(--accent);
+  font-weight:800;
+  margin-bottom:15px;
+  font-size:18px;
+}
+.math{
+  font-family:"Courier New",monospace;
+  background:#f8fafc;
+  border-radius:8px;
+  padding:15px;
+  overflow-x:auto;
+  line-height:2;
+}
+.final{
+  background:#ecfdf5;
+  border:2px solid #10b981;
+  border-radius:15px;
+  padding:25px;
+  margin-top:30px;
+}
+.btns{
+  display:flex;
+  gap:15px;
+  margin-top:30px;
+}
+button{
+  flex:1;
+  border:none;
+  border-radius:12px;
+  padding:18px;
+  font-size:16px;
+  font-weight:700;
+  cursor:pointer;
+}
+.y{
+  background:var(--success);
+  color:white;
+}
+.n{
+  background:#e2e8f0;
+  color:#334155;
+}
+.long{
+  background:#ffffff;
+  border:1px solid #cbd5e1;
+  border-radius:12px;
+  padding:20px;
+  margin-top:15px;
+  font-family:"Courier New",monospace;
+  overflow-x:auto;
+}
+.ld{
+  line-height:2;
+  white-space:pre;
+  font-size:18px;
+}
+</style>
+</head>
+
+<body>
+
+<div class="card" id="game"></div>
+
+<script>
+(function(){
+"use strict";
+
+const csvData = `Quantity Name, Value Range or Constant (If Applicable), SI Unit
+Mach Number, Variable, Dimensionless
+Reynolds Number, Variable, Dimensionless
+Payload Fraction, Variable (0 to 1), Dimensionless
+Mass Ratio, Variable (>= 1), Dimensionless
+Mechanical Advantage, Variable, Dimensionless
+Strain, Variable, Dimensionless
+Coefficient of Friction, Variable, Dimensionless
+Drag Coefficient, Variable, Dimensionless
+Poisson Ratio, Variable (-1.0 to 0.5), Dimensionless
+Efficiency, Variable (0 to 1), Dimensionless
+Relative Density, Variable, Dimensionless
+Specific Gravity, Variable, Dimensionless
+Froude Number, Variable, Dimensionless
+Weber Number, Variable, Dimensionless
+Knudsen Number, Variable, Dimensionless
+Strouhal Number, Variable, Dimensionless
+Prandtl Number, Variable, Dimensionless
+Euler Number, Variable, Dimensionless
+Cavitation Number, Variable, Dimensionless
+Refractive Index, Variable (>= 1; Vacuum = 1), Dimensionless
+Plane Angle, Variable, rad (Dimensionless)
+Solid Angle, Variable, sr (Dimensionless)
+Grüneisen Parameter, Variable, Dimensionless
+Time, Variable, s
+Relaxation Time, Variable, s
+Time Constant, Variable, s
+Period, Variable, s
+Squared-time Process Constants, Variable, s^2
+Temporal Coupling Constants, Variable, s^2
+Frequency, Variable, Hz (s^-1)
+Angular Frequency, Variable, rad/s
+Decay Constant, Variable, s^-1
+Decay Frequency, Variable, s^-1
+Oscillation Frequency, Variable, Hz
+Relaxation Rate, Variable, s^-1
+Collision Rate, Variable, s^-1
+Shear Rate, Variable, s^-1
+Vorticity, Variable, s^-1
+Angular Acceleration, Variable, rad/s^2
+Angular Acceleration Squared-type Forms, Variable, s^-4
+Second-order Temporal Decay Constants, Variable, s^-2
+Decay Acceleration Forms, Variable, s^-2
+Third-order Temporal Jerk (Jerk Frequency), Variable, s^-3
+Length, Variable, m
+Distance, Variable, m
+Displacement, Variable, m
+Radius, Variable, m
+Diameter, Variable, m
+Radius of Curvature, Variable, m
+Wavelength, Variable, m
+Arc Length, Variable, m
+Circumference, Variable, m
+Perimeter, Variable, m
+Mean Free Path, Variable, m
+Penetration Depth, Variable, m
+Skin Depth, Variable, m
+Diffusion Length, Variable, m
+Thickness, Variable, m
+Breadth, Variable, m
+Height, Variable, m
+Depth, Variable, m
+Lever Arm, Variable, m
+Position Vector, Variable, m
+Baseline Length, Variable, m
+Separation, Variable, m
+Altitude, Variable, m
+Path Length, Variable, m
+Radius Vector, Variable, m
+Characteristic Length, Variable, m
+Velocity, Variable (0 to c: ~299792458), m/s
+Speed, Variable (0 to c: ~299792458), m/s
+Drift Velocity, Variable, m/s
+Escape Velocity, Variable, m/s
+Orbital Velocity, Variable, m/s
+Tangential Velocity, Variable, m/s
+Radial Velocity, Variable, m/s
+Group Velocity, Variable, m/s
+Phase Velocity, Variable, m/s
+Terminal Velocity, Variable, m/s
+Exhaust Velocity, Variable, m/s
+Detonation Velocity, Variable, m/s
+Wave Speed, Variable, m/s
+Wave Velocity, Variable, m/s
+Sound Speed, Variable (Air at STP: ~343), m/s
+Flow Velocity, Variable, m/s
+Sedimentation Velocity, Variable, m/s
+Specific Momentum, Variable, m/s
+Acceleration, Variable, m/s^2
+Deceleration, Variable, m/s^2
+Gravitational Field Strength, Variable (Standard Earth: ~9.80665), m/s^2
+Gravitational Acceleration, Variable (Standard Earth: ~9.80665), m/s^2
+Specific Force, Variable, m/s^2 (N/kg)
+Centripetal Acceleration, Variable, m/s^2
+Tangential Acceleration, Variable, m/s^2
+Surface Gravity Parameter, Variable, m/s^2
+Jerk, Variable, m/s^3
+Snap (Jounce), Variable, m/s^4
+Crackle, Variable, m/s^5
+Pop, Variable, m/s^6
+Area, Variable, m^2
+Surface Area, Variable, m^2
+Cross-sectional Area, Variable, m^2
+Swept Area, Variable, m^2
+Moment Area, Variable, m^2
+Diffusion Coefficient, Variable, m^2/s
+Thermal Diffusivity, Variable, m^2/s
+Hydraulic Diffusivity, Variable, m^2/s
+Eddy Diffusivity, Variable, m^2/s
+Mass Diffusivity, Variable, m^2/s
+Kinematic Viscosity, Variable, m^2/s
+Specific Angular Momentum, Variable, m^2/s
+Circulation, Variable, m^2/s
+Area Velocity, Variable, m^2/s
+Specific Energy, Variable, J/kg (m^2/s^2)
+Gravitational Potential, Variable, J/kg (m^2/s^2)
+Area Acceleration, Variable, m^2/s^2
+Specific Power, Variable, W/kg (m^2/s^3)
+Area Jerk, Variable, m^2/s^3
+Area Snap, Variable, m^2/s^4
+Volume, Variable, m^3
+Capacity, Variable, m^3
+Volumetric Measure, Variable, m^3
+Volumetric Flow Rate, Variable, m^3/s
+Volume Velocity, Variable, m^3/s
+Volumetric Expansion Rate, Variable, m^3/s
+Discharge Rate, Variable, m^3/s
+Flow Capacity, Variable, m^3/s
+Gravitational Parameter GM, Variable (Earth: ~3.986e14), m^3/s^2
+Gravitational Flux, Variable, m^3/s^2
+Volume Acceleration, Variable, m^3/s^2
+Volume Jerk, Variable, m^3/s^3
+Higher Volumetric Acceleration-density Rates, Variable, m^3/s^4
+Second Moment of Area, Variable, m^4
+Area Moment of Inertia, Variable, m^4
+Polar Moment of Area, Variable, m^4
+Fourth-order Geometric Flow Forms, Variable, m^4/s
+Fourth-order Geometric Acceleration Forms, Variable, m^4/s^2
+Fifth-order Volumetric Transport Forms, Variable, m^5/s
+Wave Number, Variable, m^-1
+Linear Attenuation Coefficient, Variable, m^-1
+Curvature, Variable, m^-1
+Slowness, Variable, s/m
+Inverse Velocity, Variable, s/m
+Inverse Acceleration, Variable, s^2/m
+Reciprocal Velocity Gradient Forms, Variable, m^-1
+Curvature Acceleration Density Forms, Variable, m^-1*s^-2
+Reciprocal Area, Variable, m^-2
+Areal Density Inverse Forms, Variable, m^-2
+Flux Divergence-rate Forms, Variable, m^-2*s^-1
+Area-frequency Density Forms, Variable, m^-2*s^-2
+Number Density, Variable, m^-3
+Mass Number Density, Variable, m^-3
+Reciprocal Volume, Variable, m^-3
+Spatial Density Forms, Variable, m^-3
+Volumetric Decay Density Rates, Variable, m^-3*s^-1
+Volume-frequency Density Forms, Variable, m^-3*s^-2
+Reciprocal Fourth-power Geometric Density Forms, Variable, m^-4
+Mass, Variable, kg
+Reduced Mass, Variable, kg
+Relativistic Mass, Variable, kg
+Mass Defect, Variable, kg
+Mass Flow Rate, Variable, kg/s
+Damping Coefficient, Variable, kg/s
+Mechanical Impedance, Variable, kg/s (N*s/m)
+Characteristic Impedance, Variable, kg/s
+Fuel Consumption Rate, Variable, kg/s
+Burn Rate, Variable, kg/s
+Mass Transfer Rate, Variable, kg/s
+Surface Tension, Variable, N/m (kg/s^2)
+Spring Constant, Variable, N/m (kg/s^2)
+Force Constant, Variable, N/m (kg/s^2)
+Translational Stiffness, Variable, N/m (kg/s^2)
+Force per Unit Length, Variable, N/m (kg/s^2)
+Energy per Unit Area, Variable, J/m^2 (kg/s^2)
+Heat Flux Density, Variable, W/m^2 (kg/s^3)
+Energy Flux Density, Variable, W/m^2 (kg/s^3)
+Sound Intensity, Variable, W/m^2 (kg/s^3)
+Irradiance, Variable, W/m^2 (kg/s^3)
+Radiance Density, Variable, W/m^2 (kg/s^3)
+Mechanical Wave Intensity, Variable, W/m^2 (kg/s^3)
+Mechanical Energy Flux, Variable, W/m^2 (kg/s^3)
+Power per Unit Area, Variable, W/m^2 (kg/s^3)
+Higher-order Power-rate Densities, Variable, kg/s^4
+Time-rate of Power, Variable, kg/s^4
+Power Dissipation Rate, Variable, kg/s^4
+Momentum, Variable, kg*m/s
+Linear Momentum, Variable, kg*m/s
+Photon Momentum, Variable, kg*m/s
+Wave Momentum, Variable, kg*m/s
+Relativistic Momentum, Variable, kg*m/s
+Four-Momentum, Variable, kg*m/s
+Impulse, Variable, N*s (kg*m/s)
+Force, Variable, N (kg*m/s^2)
+Weight, Variable, N
+Thrust, Variable, N
+Centripetal Force, Variable, N
+Centrifugal Force, Variable, N
+Traction Force, Variable, N
+Buoyancy Force, Variable, N
+Drag Force, Variable, N
+Lift Force, Variable, N
+Tension, Variable, N
+Compression Force, Variable, N
+Shearing Force, Variable, N
+Rocket Thrust, Variable, N
+Inertial Force, Variable, N
+Dynamic Load, Variable, N
+Static Load, Variable, N
+Momentum Transfer Rate, Variable, N
+Momentum Current, Variable, N
+Momentum Rate, Variable, N
+Energy Gradient, Variable, J/m (N)
+Force-rate Density, Variable, kg*m/s^3
+Power-per-Velocity Forms, Variable, kg*m/s^3
+Force Change Rate (Yank), Variable, N/s (kg*m/s^4)
+Yank Gradient, Variable, N/s^2
+Angular Momentum, Variable, kg*m^2/s
+Orbital Angular Momentum, Variable, kg*m^2/s
+Angular Impulse, Variable, N*m*s (kg*m^2/s)
+Gyroscopic Moment, Variable, N*m
+Four-Momentum Angular Forms, Variable, kg*m^2/s
+Action, Variable (Planck's Const: ~6.626e-34), J*s (kg*m^2/s)
+Area Moment Rate, Variable, kg*m^2/s
+Energy, Variable, J (kg*m^2/s^2)
+Work, Variable, J
+Heat, Variable, J
+Rotational Kinetic Energy, Variable, J
+Translational Kinetic Energy, Variable, J
+Potential Energy, Variable, J
+Gravitational Potential Energy, Variable, J
+Elastic Potential Energy, Variable, J
+Rest Energy, Variable, J
+Binding Energy, Variable, J
+Gravitational Binding Energy, Variable, J
+Fracture Energy, Variable, J
+Surface Energy, Variable, J/m^2 (kg/s^2)
+Adhesion Energy, Variable, J
+Cohesion Energy, Variable, J
+Mechanical Energy, Variable, J
+Photon Energy, Variable, J
+Torque (Moment of Force), Variable, N*m
+Bending Moment, Variable, N*m
+Twisting Moment, Variable, N*m
+Rotational Stiffness, Variable, N*m/rad
+Specific Torque, Variable, N*m/kg
+Power, Variable, W (kg*m^2/s^3)
+Radiant Power, Variable, W
+Rotational Power, Variable, W
+Translational Power, Variable, W
+Power Change Rate (Power Gradient), Variable, W/s
+Volume Momentum, Variable, kg*m^3/s
+Bending Stiffness, Variable, kg*m^3/s^2
+Flexural Rigidity, Variable, kg*m^3/s^2
+Torsional Rigidity, Variable, kg*m^3/s^2
+Volume Power Flux Forms, Variable, kg*m^3/s^3
+Higher Rotational Inertia-energy Coupling Quantities, Variable, kg*m^4/s^2
+Rotational Energy Transfer Density Forms, Variable, kg*m^4/s^3
+Fourth-order Angular Momentum Interaction Forms, Variable, kg*m^4/s
+Fifth-order Energy Moment Forms, Variable, kg*m^5/s^2
+Sixth-order Inertia Moments, Variable, kg*m^6/s^2
+Moment of Inertia, Variable, kg*m^2
+Mass Moment, Variable, kg*m
+First Moment of Mass, Variable, kg*m
+Second Moment of Mass, Variable, kg*m^2
+Section Modulus x Density, Variable, kg*m
+Linear Mass Density, Variable, kg/m
+Compactness Parameter, Variable, kg/m
+Drag Coefficient Term, Variable, kg/m
+Dynamic Viscosity, Variable, Pa*s (kg/(m*s))
+Transport Coefficient, Variable, kg/(m*s)
+Rheological Consistency Index, Variable, Pa*s^n
+Pressure, Variable (Atmospheric: ~101325), Pa (kg/(m*s^2))
+Stress, Variable, Pa
+Yield Stress, Variable, Pa
+Tensile Stress, Variable, Pa
+Compressive Stress, Variable, Pa
+Hydrostatic Stress, Variable, Pa
+Dynamic Pressure, Variable, Pa
+Radiation Pressure, Variable, Pa
+Hydrostatic Pressure, Variable, Pa
+Vapor Pressure, Variable, Pa
+Vacuum Pressure, Variable, Pa
+Ram Pressure, Variable, Pa
+Shear Stress, Variable, Pa
+Energy Density, Variable, J/m^3 (Pa)
+Strain Energy Density, Variable, J/m^3 (Pa)
+Sound Energy Density, Variable, J/m^3 (Pa)
+Elastic Modulus, Variable, Pa
+Young’s Modulus, Variable, Pa
+Bulk Modulus, Variable, Pa
+Shear Modulus, Variable, Pa
+Rigidity Modulus, Variable, Pa
+Momentum Flux Density, Variable, Pa (kg/(m*s^2))
+Radiation Energy Density, Variable, J/m^3 (Pa)
+Mass-Energy Density, Variable, J/m^3 (Pa)
+Elastic Energy Density, Variable, J/m^3 (Pa)
+Power Density, Variable, W/m^3 (kg/(m*s^3))
+Power Flux Volume Density, Variable, W/m^3
+Energy Transfer Density Rate, Variable, kg/(m*s^3)
+Surface Density, Variable, kg/m^2
+Area Mass Density, Variable, kg/m^2
+Surface Mass Density, Variable, kg/m^2
+Mass per Unit Area, Variable, kg/m^2
+Ballistic Coefficient, Variable, kg/m^2
+Acoustic Impedance, Variable, Pa*s/m (kg/(m^2*s))
+Specific Acoustic Impedance, Variable, kg/(m^2*s)
+Momentum Density, Variable, kg/(m^2*s)
+Linear Momentum Density, Variable, kg/(m^2*s)
+Radiation Momentum Density, Variable, kg/(m^2*s)
+Surface Momentum Density, Variable, kg/(m^2*s)
+Particle Flux Density, Variable, particles/(m^2*s)
+Particle Flux, Variable, particles/(m^2*s)
+Radiation Momentum Flux, Variable, Pa
+Momentum Flux, Variable, N/m^2
+Sedimentation Rate, Variable, kg/(m^2*s)
+Flux of Mass, Variable, kg/(m^2*s)
+Mass Diffusion Flux, Variable, kg/(m^2*s)
+Pressure Gradient, Variable, Pa/m (kg/(m^2*s^2))
+Tidal Force Gradient, Variable, N/m (kg/(m^2*s^2))
+Specific Weight, Variable, N/m^3 (kg/(m^2*s^2))
+Specific Weight Gradient Forms, Variable, kg/(m^2*s^2)
+Spectral Irradiance Density Forms, Variable, kg/(m^2*s^3)
+Density (Mass Density), Variable, kg/m^3
+Volumetric Density, Variable, kg/m^3
+Mass Concentration, Variable, kg/m^3
+Momentum Transfer Coefficient, Variable, kg/(m^3*s)
+Mass Transport Density Rate, Variable, kg/(m^3*s)
+Torque Density, Variable, kg/(m^2*s^2)
+Rotational Stress Density, Variable, kg/(m^2*s^2)
+Hyper-surface Momentum Density Transfer Forms, Variable, kg/(m^4*s)
+Hyper-pressure Density Forms, Variable, kg/(m^5*s^2)
+Squared Momentum-energy Interaction Terms, Variable, kg^2*m^2/s^2
+Higher Coupled Momentum-force Terms, Variable, kg^2*m/s^2
+Squared-force-density Interaction Terms, Variable, kg^2/s^2
+Higher-order Stress-energy Density Forms, Variable, kg^2/(m^2*s^2)
+Mechanical Mobility, Variable, s/kg
+Mechanical Admittance, Variable, s/kg
+Mobility Coefficient, Variable, s/kg
+Compliance, Variable, m/N (s^2/kg)
+Fluidity, Variable, m*s/kg
+Elastic Displacement Sensitivity, Variable, m/N
+Inverse Surface Tension Forms, Variable, m/N
+Specific Area, Variable, m^2/kg
+Area per Unit Mass, Variable, m^2/kg
+Mass Attenuation Coefficient, Variable, m^2/kg
+Mass Absorption Coefficient, Variable, m^2/kg
+Collision Cross Section per Unit Mass, Variable, m^2/kg
+Specific Mobility Transport Forms, Variable, m^2/(kg*s)
+Specific Volume, Variable, m^3/kg
+Volume per Unit Mass, Variable, m^3/kg
+Inverse Density, Variable, m^3/kg
+Specific Capacity Volume, Variable, m^3/kg
+Volumetric Mobility Forms, Variable, m^3/(kg*s)
+Advanced Compliance-rigidity Interaction Forms, Variable, m^4/(kg*s^2)
+Compressibility, Variable, Pa^-1 (m*s^2/kg)
+Inverse Pressure, Variable, Pa^-1
+Rheological Flow Mobility Forms, Variable, m*s^3/kg
+Inverse Force Density-type Dimensional Forms, Variable, s^2/(kg*m^2)
+Higher Transport Admittance Forms, Variable, s^3/(kg*m^2)
+Ultra-compressibility Density Forms, Variable, s^2/(kg*m^3)
+Advanced Rheological Inverse Forms, Variable, s^4/(kg*m)
+Squared Energy-density Ratios, Variable, m^4/(kg^2*s^4)
+Squared Structural Compliance Terms, Variable, m^4/(kg^2*s^4)
+Non-linear Resonance Coupling Parameters, Variable, m^4/(kg^2*s^4)
+Higher-order Elastic Interaction Coefficients, Variable, m^4/(kg^2*s^4)
+Specific Enthalpy, Variable, J/kg
+Specific Internal Energy, Variable, J/kg
+Specific Helmholtz Energy, Variable, J/kg
+Specific Gibbs Energy, Variable, J/kg
+Radiant Intensity, Variable, W/sr
+Radiance, Variable, W/(m^2*sr)
+Spectral Irradiance, Variable, W/m^3
+Hydraulic Conductivity, Variable, m/s
+Permeability Flux Rate, Variable, kg/(m*s)
+Reynolds Number Parameter Units, Variable, kg/(m*s)
+Mach Momentum Flux, Variable, kg/(m*s^2)
+Energy per Unit Length, Variable, J/m
+Fracture Toughness, Variable, Pa*m^0.5
+Mass Fraction Flow, Variable, s^-1
+Volume Snap, Variable, m^3/s^4
+Modulus of Elasticity, Variable, Pa
+Specific Impulse, Variable, m/s (or s)
+Angular Velocity, Variable, rad/s
+Mechanical Advantage Rate, Variable, Dimensionless
+Power per Unit Mass, Variable, W/kg
+Fuel Specific Energy, Variable, J/kg
+Rocket Mass Ratio Parameter, Variable, Dimensionless
+Radioactive Activity, Variable, Bq
+Absorbed Dose, Variable, Gy
+Dose Equivalent, Variable, Sv
+Half-life, Variable, s
+Specific Activity, Variable, Bq/kg
+Decay Energy, Variable, J
+Nuclear Cross Section, Variable, m^2
+Linear Energy Transfer, Variable, J/m
+Speed of Light in Vacuum (c), ~299792458, m/s
+Planck Constant (h), ~6.62607015e-34, J*s
+Reduced Planck Constant (hbar), ~1.054571817e-34, J*s
+Newtonian Constant of Gravitation (G), ~6.67430e-11, m^3/(kg*s^2)
+Electron Mass (m_e), ~9.1093837e-31, kg
+Proton Mass (m_p), ~1.67262192e-27, kg
+Neutron Mass (m_n), ~1.67492750e-27, kg
+Fine-Structure Constant (alpha), ~7.2973525693e-3, Dimensionless
+Rydberg Constant (R_inf), ~10973731.568, m^-1
+Bohr Radius (a_0), ~5.291772109e-11, m
+Standard Acceleration of Gravity (g_n), ~9.80665, m/s^2
+Standard Atmosphere (atm), ~101325, Pa
+Pi (pi), ~3.1415926535, Dimensionless
+Euler's Number (e), ~2.7182818284, Dimensionless
+Golden Ratio (phi), ~1.6180339887, Dimensionless
+Euler-Mascheroni Constant (gamma), ~0.5772156649, Dimensionless
+Apéry's Constant (zeta(3)), ~1.2020569031, Dimensionless
+Absement, Variable, m*s
+Absity, Variable, m*s^2
+Abserk, Variable, m*s^3
+Section Modulus, Variable, m^3
+Radius of Gyration, Variable, m
+Enstrophy, Variable, s^-1
+Helicity, Variable, m/s^2
+Acoustic Impedance (Volume), Variable, Pa*s/m^3 (kg/(m^4*s))
+Acoustic Compliance, Variable, m^5/N (m^4*s^2/kg)
+Acoustic Inertance, Variable, kg/m^4
+Acoustic Energy, Variable, J (kg*m^2/s^2)
+Acoustic Power, Variable, W (kg*m^2/s^3)
+Specific Stiffness (Specific Modulus), Variable, J/kg (m^2/s^2)
+Specific Strength, Variable, J/kg (m^2/s^2)
+Damping Ratio, Variable, Dimensionless
+Logarithmic Decrement, Variable, Dimensionless
+Coefficient of Restitution, Variable, Dimensionless
+Darcy Friction Factor, Variable, Dimensionless
+Capillary Length, Variable, m
+Bond Number, Variable, Dimensionless
+Capillary Number, Variable, Dimensionless
+Deborah Number, Variable, Dimensionless
+Rossby Number, Variable, Dimensionless
+Atwood Number, Variable, Dimensionless
+Archimedes Number, Variable, Dimensionless
+Bagnold Number, Variable, Dimensionless
+Bingham Number, Variable, Dimensionless
+Boussinesq Number, Variable, Dimensionless
+Eötvös Number, Variable, Dimensionless
+Womersley Number, Variable, Dimensionless
+Sommerfeld Number, Variable, Dimensionless
+Specific Latent Heat, Variable, J/kg (m^2/s^2)
+Geopotential, Variable, m^2/s^2
+Potential Vorticity, Variable, m^-1*s^-1
+Lagrangian, Variable, J (kg*m^2/s^2)
+Hamiltonian, Variable, J (kg*m^2/s^2)
+Action Density, Variable, J*s/m^3 (kg/(m*s))
+Specific Action, Variable, J*s/kg (m^2/s)
+Kinematic Pressure, Variable, m^2/s^2
+Stream Function, Variable, m^2/s
+Velocity Potential, Variable, m^2/s
+Displacement Thickness, Variable, m
+Momentum Thickness, Variable, m
+Energy Thickness, Variable, m
+Phase Space Volume (Single Particle 3D), Variable, kg^3*m^6/s^3
+Mobility Ratio, Variable, Dimensionless
+Eddington Luminosity, Variable, W (kg*m^2/s^3)
+Lense-Thirring Precession Rate, Variable, rad/s (s^-1)
+Schwarzschild Radius, Variable, m
+Hubble Parameter (H_0), Variable (~2.2e-18), s^-1
+Cosmological Constant (Lambda), Variable (~1.1e-52), m^-2
+Compton Wavelength, ~2.4263102389e-12, m
+Classical Electron Radius, ~2.8179403227e-15, m
+Thomson Cross-section, ~6.6524587158e-29, m^2
+Planck Length, ~1.616255e-35, m
+Planck Mass, ~2.176434e-8, kg
+Planck Time, ~5.391247e-44, s
+Planck Energy, ~1.9561e9, J (kg*m^2/s^2)
+Planck Force, ~1.21027e44, N (kg*m/s^2)
+Planck Density, ~5.155e96, kg/m^3
+Planck Power, ~3.62831e52, W (kg*m^2/s^3)
+Rydberg Energy, ~2.1798723611e-18, J (kg*m^2/s^2)
+Hartree Energy, ~4.3597447222e-18, J (kg*m^2/s^2)
+Feigenbaum Constant (delta), ~4.6692016091, Dimensionless
+Feigenbaum Constant (alpha), ~2.5029078750, Dimensionless
+Conway's Constant, ~1.3035772690, Dimensionless
+Gelfond's Constant, ~23.1406926327, Dimensionless
+Magic Angle, ~0.9553166 (54.735 deg), rad (Dimensionless)
+First Moment of Area, Variable, m^3
+De Broglie Wavelength, Variable, m
+Impact Parameter, Variable, m
+Kerr Parameter (Specific Angular Momentum), Variable, m
+Gravitational Wave Strain, Variable, Dimensionless
+Radiant Exposure, Variable, J/m^2 (kg/s^2)
+Catalan's Constant, ~0.915965594, Dimensionless
+Plastic Ratio, ~1.324717957, Dimensionless
+Khinchin's Constant, ~2.685452001, Dimensionless
+Glaisher-Kinkelin Constant, ~1.282427129, Dimensionless
+Sierpiński's Constant, ~2.584981759, Dimensionless
+Astronomical Unit (AU), ~149597870700, m
+Light-year (ly), ~9.4607304725808e15, m
+Parsec (pc), ~3.08567758149137e16, m
+Solar Mass (M_Sun), ~1.98847e30, kg
+Solar Radius (R_Sun), ~6.957e8, m
+Solar Luminosity (L_Sun), ~3.828e26, W (kg*m^2/s^3)
+Earth Mass (M_Earth), ~5.9722e24, kg
+Earth Equatorial Radius (R_Earth), ~6378137, m`;
+
+// Parsing the master dimensional dataset
+const db = csvData.trim().split('\n').slice(1).map(line => {
+    let parts = line.split(',');
+    let name = parts[0].trim();
+    let valStr = parts[1].trim();
+    let unit = parts.slice(2).join(',').trim();
+
+    let p = {kg: 0, m: 0, s: 0};
+    let base = unit;
+    let match = unit.match(/\(([^)]+)\)/);
+    if (match) {
+        base = match[1];
+    }
+
+    let aliasMap = {
+        'N': 'kg*m/s^2', 'J': 'kg*m^2/s^2', 'W': 'kg*m^2/s^3',
+        'Pa': 'kg/(m*s^2)', 'Hz': 's^-1', 'Bq': 's^-1',
+        'Gy': 'm^2/s^2', 'Sv': 'm^2/s^2'
+    };
+    if (aliasMap[base]) base = aliasMap[base];
+
+    base = base.replace(/\s+/g, '');
+    let numDen = base.split('/');
+    let num = numDen[0];
+    let den = numDen.length > 1 ? numDen[1].replace(/\(/g, '').replace(/\)/g, '') : '';
+
+    function parse(s, sign) {
+        if (!s) return;
+        s.split('*').forEach(t => {
+            let u = t.split('^')[0];
+            let pow = t.split('^').length > 1 ? parseFloat(t.split('^')[1]) : 1;
+            if (u === 'kg') p.kg += sign * pow;
+            if (u === 'm') p.m += sign * pow;
+            if (u === 's') p.s += sign * pow;
+        });
+    }
+
+    parse(num, 1);
+    parse(den, -1);
+
+    // Derived properties
+    let factorToCGS = Math.pow(1000, p.kg) * Math.pow(100, p.m); 
+    
+    let cgsUnit = unit
+        .replace(/\bkg\b/g, 'g')
+        .replace(/\bm\b/g, 'cm')
+        .replace(/\bN\b/g, 'dyne')
+        .replace(/\bJ\b/g, 'erg')
+        .replace(/\bPa\b/g, 'Ba')
+        .replace(/\bW\b/g, 'erg/s');
+
+    return { name, valStr, unit, cgsUnit, p, factorToCGS };
+});
+
+let q = 0;
+
+// Format helper to clean units dynamically via HTML superscript and nice dot operators
+function formatUnit(unitStr) {
+    if (!unitStr) return "";
+    return unitStr.replace(/\^([-\d]+)/g, '<sup>$1</sup>').replace(/\*/g, '·');
+}
+
+function sci(n) {
+    if (n === 0) return { m: 0, e: 0 };
+    let e = Math.floor(Math.log10(Math.abs(n)));
+    let m = n / Math.pow(10, e);
+    if (Math.abs(m) >= 10) { m /= 10; e++; }
+    if (Math.abs(m) < 1) { m *= 10; e--; }
+    return { m, e };
+}
+
+function sciText(n) {
+    if (n === 0) return `0`;
+    const s = sci(n);
+    return `${s.m.toFixed(4).replace(/\.?0+$/, "")} × 10<sup>${s.e}</sup>`;
+}
+
+// Emulate a division/multiplication graphical step matching the UI requirement
+function longDivision(s1m, s2m, directionDiv) {
+    let a = s1m;
+    let b = s2m;
+    let result = (a * b).toFixed(6);
+    let operator = "×";
+    if (directionDiv) {
+        result = (a / b).toFixed(6);
+        operator = "÷";
+    }
+    
+    let html = `
+    <div class="long">
+    <div class="ld">
+      ${a.toFixed(4)}
+    ${operator} ${b.toFixed(4)}
+    ------------
+      ${result}
+    </div>
+    <br>
+    <div><b>Mantissa Result = ${result}</b></div>
+    </div>
+    `;
+    return html;
+}
+
+function rand(arr) {
+    return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function start() {
+    q++;
+    const game = document.getElementById("game");
+
+    const item = rand(db);
+    const convertToCGS = Math.random() < 0.5;
+
+    let givenValue;
+    if (item.valStr.includes('~')) {
+        givenValue = parseFloat(item.valStr.replace(/[^0-9.eE+-]/g, ''));
+    } else if (item.valStr.includes('(0 to 1)')) {
+        givenValue = Math.random();
+    } else if (item.valStr.includes('(>= 1)')) {
+        givenValue = 1 + Math.random() * 99;
+    } else if (item.valStr.includes('(-1.0 to 0.5)')) {
+        givenValue = -1.0 + Math.random() * 1.5;
+    } else {
+        givenValue = Math.pow(10, (Math.random() * 6) - 3);
+    }
+
+    let givenUnitRaw = convertToCGS ? item.unit : item.cgsUnit;
+    let targetUnitRaw = convertToCGS ? item.cgsUnit : item.unit;
+    let factor = convertToCGS ? item.factorToCGS : (1 / item.factorToCGS);
+
+    // Dimensionless handler
+    if (factor === 1 && !item.p.kg && !item.p.m && !item.p.s) {
+        targetUnitRaw = givenUnitRaw;
+    }
+
+    let givenUnitFormatted = formatUnit(givenUnitRaw);
+    let targetUnitFormatted = formatUnit(targetUnitRaw);
+
+    game.innerHTML = `
+    <div class="progress">
+    <div>DIMENSIONAL UNIT CONVERSION</div>
+    <div>QUESTION ${q}</div>
+    </div>
+
+    <div class="qbox">
+    <div class="qtext">
+    The quantity <b>${item.name}</b> consists of base dimensional components: 
+    <b>[M<sup>${item.p.kg}</sup> L<sup>${item.p.m}</sup> T<sup>${item.p.s}</sup>]</b>.
+    <br><br>
+    Convert
+    <br><br>
+    <b>${sciText(givenValue)} ${givenUnitFormatted}</b>
+    <br><br>
+    into <b>${targetUnitFormatted}</b>.
+    </div>
+    </div>
+
+    <div class="click" id="reveal">
+    ✨ Press any key or click here to reveal complete solution
+    </div>
+
+    <div id="sol" style="display:none"></div>
+    `;
+
+    function reveal() {
+        document.removeEventListener("keydown", reveal);
+        document.getElementById("reveal").style.display = "none";
+        const sol = document.getElementById("sol");
+        sol.style.display = "block";
+
+        const ans = givenValue * factor;
+        const s1 = sci(givenValue);
+        const s2 = sci(factor);
+        const s3 = sci(ans);
+        
+        let logicHtml = "Dimensionless ratio. SI and CGS representations are identical.";
+        
+        if (factor !== 1 || item.p.kg !== 0 || item.p.m !== 0) {
+            let fromPow = convertToCGS ? {kg: 1000, m: 100, s: 1} : {kg: 1/1000, m: 1/100, s: 1};
+            let fromU = convertToCGS ? {kg: 'g', m: 'cm', s: 's'} : {kg: 'kg', m: 'm', s: 's'};
+            
+            let parts = [];
+            if (item.p.kg) parts.push(`(${fromPow.kg} ${fromU.kg})<sup>${item.p.kg}</sup>`);
+            if (item.p.m) parts.push(`(${fromPow.m} ${fromU.m})<sup>${item.p.m}</sup>`);
+            if (item.p.s) parts.push(`(1 ${fromU.s})<sup>${item.p.s}</sup>`);
+            
+            logicHtml = `1 ${givenUnitFormatted}<br> = ${parts.join(' × ')} <br> = ${sciText(factor)} ${targetUnitFormatted}`;
+        }
+
+        sol.innerHTML = `
+        <div class="step">
+        <div class="title">Step 1: Dimensional Replacement Logic</div>
+        <div class="math">
+        ${logicHtml}
+        </div>
+        </div>
+
+        <div class="step">
+        <div class="title">Step 2: Substitute the given quantity</div>
+        <div class="math">
+        ${sciText(givenValue)} ${givenUnitFormatted}
+        <br><br>
+        = (${s1.m.toFixed(4)} × 10<sup>${s1.e}</sup>) × (${s2.m.toFixed(4)} × 10<sup>${s2.e}</sup>)
+        </div>
+        </div>
+
+        <div class="step">
+        <div class="title">Step 3: Process Mantissas</div>
+        <div class="math">
+        ${s1.m.toFixed(4)} × ${s2.m.toFixed(4)}
+        <br><br>
+        = ${(s1.m * s2.m).toFixed(6)}
+        </div>
+        ${longDivision(s1.m, s2.m, !convertToCGS && factor !== 1)}
+        </div>
+
+        <div class="step">
+        <div class="title">Step 4: Process Powers of 10</div>
+        <div class="math">
+        10<sup>${s1.e}</sup> × 10<sup>${s2.e}</sup>
+        <br><br>
+        = 10<sup>${s1.e + s2.e}</sup>
+        </div>
+        </div>
+
+        <div class="step">
+        <div class="title">Step 5: Normalize Scientific Notation</div>
+        <div class="math">
+        
+        <br><br>
+        ${(s1.m * s2.m).toFixed(6)} × 10<sup>${s1.e + s2.e}</sup>
+        <br><br>
+        Final normalized scientific notation:
+        <br><br>
+        ${s3.m.toFixed(4)} × 10<sup>${s3.e}</sup>
+        </div>
+        </div>
+
+        <div class="final">
+        <div class="title" style="color:#059669">Final Answer</div>
+        <div style="font-size:24px;font-weight:800;">
+        ${s3.m.toFixed(4)} × 10<sup>${s3.e}</sup> ${targetUnitFormatted}
+        </div>
+        </div>
+
+        <div class="btns">
+        <button class="y" id="y">Y = Next Question</button>
+        <button class="n" id="n">N = Exit</button>
+        </div>
+        `;
+
+        document.getElementById("y").onclick = start;
+        document.getElementById("n").onclick = () => {
+            game.innerHTML = `
+            <div class="qbox" style="background:#fef2f2;border-left:6px solid #dc2626;">
+            <div class="qtext" style="color:#991b1b;">Session Ended</div>
+            </div>
+            <div class="step">Refresh the page to restart the game.</div>
+            `;
+        };
+    }
+
+    document.addEventListener("keydown", reveal, {once: true});
+    document.getElementById("reveal").onclick = reveal;
+}
+
+start();
+
+})();
+</script>
+
+</body>
+</html>

@@ -1,0 +1,826 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mass Units Scientific Conversion Game</title>
+
+<style>
+body{
+  margin:0;
+  padding:40px 20px;
+  font-family:"Segoe UI",Arial,sans-serif;
+  background:#f4f6f9;
+  color:#222;
+}
+
+.card{
+  max-width:1100px;
+  margin:0 auto;
+  background:white;
+  border-radius:16px;
+  padding:40px;
+  box-shadow:0 10px 30px rgba(0,0,0,0.08);
+  border-top:6px solid #2563eb;
+}
+
+.q{
+  font-size:25px;
+  font-weight:700;
+  line-height:1.8;
+  margin-bottom:28px;
+  background:#eff6ff;
+  padding:20px;
+  border-radius:10px;
+  border-left:6px solid #3b82f6;
+}
+
+.step{
+  margin:18px 0;
+  padding-left:14px;
+  border-left:4px solid #dbeafe;
+  line-height:1.9;
+  font-size:18px;
+}
+
+.step-title{
+  font-size:20px;
+  color:#1e40af;
+  margin-bottom:8px;
+  display:inline-block;
+}
+
+.highlight-box{
+  background:#f8fafc;
+  padding:15px;
+  border-radius:8px;
+  border:1px solid #e2e8f0;
+  margin-top:10px;
+}
+
+.math-bracket-container{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  background:#fff;
+  padding:30px 20px;
+  border-radius:12px;
+  border:1px solid #cbd5e1;
+  font-family:"Courier New",monospace;
+  font-size:24px;
+  margin:15px 0;
+}
+
+.mb-row{
+  display:flex;
+}
+
+.mb-left{
+  width:150px;
+  text-align:right;
+  padding-right:15px;
+  font-weight:bold;
+}
+
+.mb-right{
+  padding:5px 15px;
+  letter-spacing:3px;
+}
+
+.mb-quotient{
+  color:#2563eb;
+  font-weight:bold;
+}
+
+.mb-dividend{
+  border-top:2px solid #0f172a;
+  border-left:2px solid #0f172a;
+}
+
+.gd-steps-container{
+  width:100%;
+  margin-top:20px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+
+.gd-step{
+  background:#f1f5f9;
+  padding:12px 18px;
+  border-radius:8px;
+  font-size:17px;
+  border-left:4px solid #38bdf8;
+}
+
+.gd-badge{
+  background:#0f172a;
+  color:white;
+  padding:4px 10px;
+  border-radius:6px;
+  font-size:14px;
+  font-weight:bold;
+  margin-right:10px;
+}
+
+.btns{
+  display:flex;
+  gap:18px;
+  margin-top:30px;
+}
+
+button{
+  border:none;
+  padding:14px 34px;
+  border-radius:10px;
+  font-size:20px;
+  font-weight:700;
+  cursor:pointer;
+  transition:all 0.2s;
+}
+
+button:hover{
+  transform:translateY(-2px);
+}
+
+.y{
+  background:#15803d;
+  color:white;
+}
+
+.n{
+  background:#dc2626;
+  color:white;
+}
+</style>
+</head>
+
+<body>
+
+<main class="card">
+<div id="game"></div>
+</main>
+
+<script>
+
+(function(){
+
+"use strict";
+
+const game=document.getElementById("game");
+
+let questionNumber=0;
+
+const units=[
+
+["quettagram",1e27],
+["ronnagram",1e24],
+["yottagram",1e21],
+["zettagram",1e18],
+["exagram",1e15],
+["petagram",1e12],
+["teragram",1e9],
+["gigagram",1e6],
+["megagram",1e3],
+["metric tonne",1e3],
+["quintal",1e2],
+["kilogram",1],
+["hectogram",1e-1],
+["decagram",1e-2],
+["gram",1e-3],
+["decigram",1e-4],
+["centigram",1e-5],
+["milligram",1e-6],
+["microgram",1e-9],
+["nanogram",1e-12],
+["picogram",1e-15],
+["femtogram",1e-18],
+["attogram",1e-21],
+["zeptogram",1e-24],
+["yoctogram",1e-27],
+["rontogram",1e-30],
+["quectogram",1e-33],
+
+["atomic mass unit",1.66053906660e-27],
+["electron mass",9.1093837015e-31],
+["solar mass",1.98847e30],
+["Earth mass",5.9722e24],
+["lunar mass",7.342e22],
+["Chandrasekhar limit",2.8637824634e30],
+
+["pound",4.5359237e-1],
+["ounce",2.8349523125e-2],
+["stone",6.35029318],
+["short ton",9.0718474e2],
+["long ton",1.0160469088e3],
+["slug",1.4593902937e1],
+
+["carat",2e-4],
+["grain",6.479891e-5]
+
+];
+
+const questionVariants=[
+
+(unit,plural,val)=>`We know that 1 ${unit} = ${val} kilograms.<br>Using inversion, how many <b>${plural}</b> are present in exactly <b>1 kilogram</b>?`,
+
+(unit,plural,val)=>`Given that 1 ${unit} equals ${val} kilograms, determine how many <b>${plural}</b> make up exactly <b>1 kilogram</b>.`,
+
+(unit,plural,val)=>`If 1 ${unit} = ${val} kilograms, calculate the number of <b>${plural}</b> contained in <b>1 kilogram</b>.`,
+
+(unit,plural,val)=>`Using the conversion 1 ${unit} = ${val} kilograms, find how many <b>${plural}</b> are equivalent to <b>1 kilogram</b>.`
+
+];
+
+function shuffle(arr){
+
+  for(let i=arr.length-1;i>0;i--){
+
+    const j=Math.floor(Math.random()*(i+1));
+
+    [arr[i],arr[j]]=[arr[j],arr[i]];
+  }
+
+  return arr;
+}
+
+let remaining=shuffle([...units]);
+
+function pluralize(str){
+
+  if(str.includes("mass")) return str;
+
+  if(str.includes("limit")) return str;
+
+  if(str==="pound") return "pounds";
+
+  if(str==="ounce") return "ounces";
+
+  if(str==="stone") return "stones";
+
+  if(str==="slug") return "slugs";
+
+  if(str==="grain") return "grains";
+
+  if(str==="carat") return "carats";
+
+  if(str.includes("ton")) return str+"s";
+
+  return str+"s";
+}
+
+function scientificForm(num){
+
+  if(num===0){
+
+    return {mantissa:0,exponent:0};
+  }
+
+  let exponent=Math.floor(Math.log10(Math.abs(num)));
+
+  let mantissa=num/Math.pow(10,exponent);
+
+  if(mantissa>=10){
+
+    mantissa/=10;
+
+    exponent++;
+  }
+
+  return {
+
+    mantissa,
+    exponent
+  };
+}
+
+function formatScientific(num,digits=4){
+
+  const sci=scientificForm(num);
+
+  return `${sci.mantissa.toFixed(digits)} × 10<sup>${sci.exponent}</sup>`;
+}
+
+function roundSafe(n,d=12){
+
+  return Number(parseFloat(n).toFixed(d));
+}
+
+function generateLongDivision(num,den){
+
+  const quotient=num/den;
+
+  let html=`
+
+  <div class="math-bracket-container">
+
+    <div class="mb-row">
+      <div class="mb-left"></div>
+      <div class="mb-right mb-quotient">${quotient.toFixed(5)}</div>
+    </div>
+
+    <div class="mb-row">
+      <div class="mb-left">${den}</div>
+      <div class="mb-right mb-dividend">${num}.00000</div>
+    </div>
+
+  </div>
+
+  <div class="gd-steps-container">
+  `;
+
+  let remainder=num;
+
+  for(let i=1;i<=5;i++){
+
+    let current=roundSafe(remainder*10);
+
+    let digit=Math.floor(current/den);
+
+    let subtract=roundSafe(digit*den);
+
+    let newRem=roundSafe(current-subtract);
+
+    html+=`
+
+    <div class="gd-step">
+
+      <span class="gd-badge">
+      Step ${i}
+      </span>
+
+      Bring down 0:
+
+      ${current} ÷ ${den}
+
+      =
+
+      <b>${digit}</b>
+
+      <br><br>
+
+      Subtract:
+
+      ${current} - (${digit} × ${den})
+
+      =
+
+      ${current} - ${subtract}
+
+      =
+
+      <b>${newRem}</b>
+
+    </div>
+    `;
+
+    remainder=newRem;
+  }
+
+  html+=`</div>`;
+
+  return html;
+}
+
+function nextQuestion(){
+
+  if(remaining.length===0){
+
+    remaining=shuffle([...units]);
+  }
+
+  questionNumber++;
+
+  game.innerHTML="";
+
+  const item=remaining.pop();
+
+  const unit=item[0];
+
+  const plural=pluralize(unit);
+
+  const kilograms=item[1];
+
+  const sci=scientificForm(kilograms);
+
+  const qDiv=document.createElement("div");
+
+  qDiv.className="q";
+
+  qDiv.innerHTML=
+
+  `Q${questionNumber}. ${
+    questionVariants[
+      Math.floor(Math.random()*questionVariants.length)
+    ](
+      unit,
+      plural,
+      formatScientific(kilograms,10)
+    )
+  }`;
+
+  game.appendChild(qDiv);
+
+  const reveal=document.createElement("div");
+
+  reveal.className="step";
+
+  reveal.innerHTML=`
+  <b>
+  Press Enter, Spacebar, or Tap anywhere to reveal the complete solution.
+  </b>
+  `;
+
+  game.appendChild(reveal);
+
+  function revealSolution(e){
+
+    if(e && e.type==="keydown" && e.key!=="Enter" && e.key!==" "){
+      return;
+    }
+
+    document.removeEventListener("keydown",revealSolution);
+
+    document.removeEventListener("click",revealSolution);
+
+    if(kilograms===1){
+
+      reveal.innerHTML=`
+
+      <div class="step">
+
+      <b class="step-title">
+      Step 1: Observe the Equality
+      </b><br><br>
+
+      1 kilogram = 1 kilogram
+
+      </div>
+
+      <div class="step">
+
+      <b class="step-title">
+      Step 2: Direct Conclusion
+      </b><br><br>
+
+      Since both units are identical, the answer is directly 1.
+
+      </div>
+
+      <div class="step">
+
+      <b class="step-title">
+      Final Answer
+      </b><br><br>
+
+      1 kilogram = <b>1 kilogram</b>
+
+      </div>
+      `;
+
+      showButtons();
+
+      return;
+    }
+
+    let approxMantissa=
+
+    Number(sci.mantissa.toFixed(4));
+
+    let decimalPlaces=
+
+    approxMantissa.toString().includes(".")
+    ?
+    approxMantissa.toString().split(".")[1].length
+    :
+    0;
+
+    let multiplier=Math.pow(10,decimalPlaces);
+
+    let numerator=1*multiplier;
+
+    let denominator=Math.round(approxMantissa*multiplier);
+
+    let inverseExponent=-sci.exponent;
+
+    let quotient=numerator/denominator;
+
+    let quotientSci=scientificForm(quotient);
+
+    let finalExponent=inverseExponent+quotientSci.exponent;
+
+    let finalMantissa=quotientSci.mantissa.toFixed(4);
+
+    reveal.innerHTML=`
+
+    <div class="step">
+
+    <b class="step-title">
+    Step 1: Write the Given Conversion
+    </b><br><br>
+
+    All values are expressed in kilograms.<br><br>
+
+    1 ${unit}
+
+    =
+
+    ${formatScientific(kilograms,10)}
+
+    kilograms
+
+    </div>
+
+    <div class="step">
+
+    <b class="step-title">
+    Step 2: Set Up the Inverse Fraction
+    </b><br><br>
+
+    To find how many ${plural} are present in 1 kilogram,
+    divide 1 by the kilogram value.<br><br>
+
+    1 kilogram
+
+    =
+
+    <b>
+    1 / (${sci.mantissa.toFixed(10)} × 10<sup>${sci.exponent}</sup>)
+    </b>
+
+    ${plural}
+
+    </div>
+
+    <div class="step">
+
+    <b class="step-title">
+    Step 3: Move the Power of 10
+    </b><br><br>
+
+    When a power of 10 moves from denominator to numerator,
+    the sign of the exponent changes.<br><br>
+
+    Therefore:<br><br>
+
+    <b>
+    (1 / ${sci.mantissa.toFixed(10)})
+    ×
+    10<sup>${inverseExponent}</sup>
+    </b>
+
+    </div>
+
+    <div class="step">
+
+    <b class="step-title">
+    Step 4: Approximate Mantissa to 4 Decimal Places
+    </b><br><br>
+
+    ${sci.mantissa.toFixed(10)}
+
+    ≈
+
+    <b>${approxMantissa}</b>
+
+    <br><br>
+
+    Therefore:<br><br>
+
+    <b>
+    (1 / ${approxMantissa})
+    ×
+    10<sup>${inverseExponent}</sup>
+    </b>
+
+    </div>
+
+    <div class="step">
+
+    <b class="step-title">
+    Step 5: Remove the Decimal from the Divisor
+    </b><br><br>
+
+    ${approxMantissa} has ${decimalPlaces} decimal place(s).<br><br>
+
+    Multiply numerator and denominator by
+
+    10<sup>${decimalPlaces}</sup>
+
+    =
+
+    ${multiplier}
+
+    <br><br>
+
+    <div class="highlight-box">
+
+    Numerator:<br>
+
+    1 × ${multiplier}
+
+    =
+
+    <b>${numerator}</b>
+
+    <br><br>
+
+    Denominator:<br>
+
+    ${approxMantissa} × ${multiplier}
+
+    =
+
+    <b>${denominator}</b>
+
+    <br><br>
+
+    Equivalent Fraction:<br><br>
+
+    <b>
+    (${numerator}/${denominator})
+    ×
+    10<sup>${inverseExponent}</sup>
+    </b>
+
+    </div>
+
+    </div>
+
+    <div class="step">
+
+    <b class="step-title">
+    Step 6: Perform Graphical Long Division
+    </b><br><br>
+
+    ${generateLongDivision(numerator,denominator)}
+
+    </div>
+
+    <div class="step">
+
+    <b class="step-title">
+    Step 7: Combine Quotient and Power of 10
+    </b><br><br>
+
+    Quotient:
+
+    <b>${quotient.toFixed(5)}</b>
+
+    <br><br>
+
+    Therefore:<br><br>
+
+    <b>
+    ${quotient.toFixed(5)}
+    ×
+    10<sup>${inverseExponent}</sup>
+    </b>
+
+    </div>
+
+    <div class="step">
+
+    <b class="step-title">
+    Step 8: Convert to Proper Standard Form
+    </b><br><br>
+
+    ${quotient.toFixed(5)}
+
+    becomes
+
+    <b>${finalMantissa}</b>
+
+    after shifting the decimal point
+
+    ${Math.abs(quotientSci.exponent)}
+
+    place(s).
+
+    <br><br>
+
+    Final exponent:
+
+    ${inverseExponent}
+
+    +
+    (${quotientSci.exponent})
+
+    =
+
+    <b>${finalExponent}</b>
+
+    <br><br>
+
+    Therefore:<br><br>
+
+    <b>
+    ${finalMantissa}
+    ×
+    10<sup>${finalExponent}</sup>
+    </b>
+
+    </div>
+
+    <div class="step">
+
+    <b class="step-title">
+    Final Answer
+    </b><br><br>
+
+    1 kilogram
+
+    ≈
+
+    <b>
+    ${finalMantissa}
+    ×
+    10<sup>${finalExponent}</sup>
+    </b>
+
+    ${plural}
+
+    </div>
+    `;
+
+    showButtons();
+  }
+
+  document.addEventListener("keydown",revealSolution);
+
+  document.addEventListener("click",revealSolution);
+
+  function showButtons(){
+
+    const btns=document.createElement("div");
+
+    btns.className="btns";
+
+    btns.innerHTML=`
+
+    <button class="y">
+    Y = Next Question
+    </button>
+
+    <button class="n">
+    N = Exit
+    </button>
+    `;
+
+    game.appendChild(btns);
+
+    btns.querySelector(".y").onclick=(e)=>{
+
+      e.stopPropagation();
+
+      nextQuestion();
+    };
+
+    btns.querySelector(".n").onclick=(e)=>{
+
+      e.stopPropagation();
+
+      game.innerHTML=`
+
+      <div class="q"
+      style="background:#fee2e2;border-left:6px solid #dc2626;">
+
+      Session Ended
+
+      </div>
+
+      <div class="step">
+
+      Refresh the page to restart the game.
+
+      </div>
+      `;
+    };
+  }
+}
+
+document.addEventListener("keydown",function(e){
+
+  const yBtn=document.querySelector(".btns .y");
+
+  const nBtn=document.querySelector(".btns .n");
+
+  if(yBtn && e.key.toLowerCase()==="y"){
+
+    yBtn.click();
+  }
+
+  if(nBtn && e.key.toLowerCase()==="n"){
+
+    nBtn.click();
+  }
+
+});
+
+nextQuestion();
+
+})();
+</script>
+
+</body>
+</html>
