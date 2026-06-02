@@ -1,0 +1,799 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Thermodynamics Master: First Law Equation Solver</title>
+    <style>
+        :root {
+            --bg-color: #f5f7fa;
+            --card-bg: #ffffff;
+            --text-main: #2c3e50;
+            --text-muted: #7f8c8d;
+            --energy-q: #e67e22;  /* Heat/Energy (Orange) */
+            --work-w: #2980b9;    /* Work Done (Blue) */
+            --delta-u: #8e44ad;   /* Internal Energy (Purple) */
+            --border-light: #dcdde1;
+            --success: #27ae60;
+            --danger: #c0392b;
+            --math-bg: #f8f9fa;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 950px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 12px 32px rgba(0,0,0,0.12);
+            position: relative;
+            min-height: 680px;
+            max-height: 95vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Page Layouts */
+        .page {
+            display: none;
+            padding: 40px;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease-out;
+            overflow-y: auto;
+        }
+        .page.active {
+            display: flex;
+        }
+
+        /* Custom Scrollbar */
+        .page::-webkit-scrollbar { width: 8px; }
+        .page::-webkit-scrollbar-track { background: #f1f2f6; border-radius: 4px; }
+        .page::-webkit-scrollbar-thumb { background: #b2bec3; border-radius: 4px; }
+        .page::-webkit-scrollbar-thumb:hover { background: #636e72; }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(12px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* Question Screen */
+        .question-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .question-text {
+            font-size: 25px;
+            line-height: 1.6;
+            text-align: center;
+            margin-bottom: 45px;
+            font-weight: 500;
+        }
+        
+        .highlight-q { color: var(--energy-q); font-weight: bold; background: #fdf2e9; padding: 2px 8px; border-radius: 6px; border: 1px solid #fadbd8; }
+        .highlight-w { color: var(--work-w); font-weight: bold; background: #ebf5fb; padding: 2px 8px; border-radius: 6px; border: 1px solid #d4e6f1; }
+        .highlight-u { color: var(--delta-u); font-weight: bold; background: #f5eef8; padding: 2px 8px; border-radius: 6px; border: 1px solid #e8daef; }
+
+        .interaction-prompt {
+            text-align: center;
+            font-size: 19px;
+            color: var(--text-muted);
+            animation: pulse 2s infinite;
+            cursor: pointer;
+            padding: 20px;
+            border: 2px dashed var(--border-light);
+            border-radius: 12px;
+            background: #fafbfc;
+            user-select: none;
+            width: 85%;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.02); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+
+        /* Answer Screen */
+        .answer-header {
+            text-align: center;
+            font-size: 26px;
+            margin-bottom: 25px;
+            font-weight: bold;
+            color: var(--text-main);
+            border-bottom: 2px solid #f1f2f6;
+            padding-bottom: 15px;
+        }
+
+        .step-box {
+            background: var(--math-bg);
+            border-left: 5px solid var(--border-light);
+            padding: 16px 22px;
+            margin-bottom: 16px;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.02);
+        }
+
+        .step-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+            color: var(--text-main);
+        }
+
+        .step-content {
+            font-size: 16.5px;
+            line-height: 1.55;
+            color: #34495e;
+        }
+
+        .math-block {
+            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            padding: 12px;
+            margin-top: 10px;
+            font-family: 'Courier New', Courier, monospace;
+            font-weight: bold;
+            font-size: 19px;
+            text-align: center;
+            border-radius: 6px;
+            box-shadow: inset 0 1px 3px rgba(0,0,0,0.02);
+        }
+        
+        .vertical-math {
+            display: block;
+            white-space: pre;
+            font-family: 'Courier New', Courier, monospace;
+            background: #2c3e50;
+            color: #ecf0f1;
+            padding: 15px;
+            border-radius: 6px;
+            margin-top: 10px;
+            font-size: 18px;
+            line-height: 1.3;
+            width: fit-content;
+            margin-left: auto;
+            margin-right: auto;
+            text-align: left;
+        }
+
+        .border-q { border-left-color: var(--energy-q); }
+        .border-w { border-left-color: var(--work-w); }
+        .border-u { border-left-color: var(--delta-u); }
+        .border-info { border-left-color: #3498db; }
+        
+        .conclusion {
+            background: #eaafc8;
+            background: -webkit-linear-gradient(to right, #f1eef6, #eef2f7);
+            background: #edf7ed;
+            border: 2px solid var(--success);
+            text-align: center;
+            padding: 22px;
+            font-size: 19px;
+            font-weight: bold;
+            color: #1e4620;
+            border-radius: 12px;
+            margin-top: 25px;
+            line-height: 1.5;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px dashed #f1f2f6;
+        }
+
+        button {
+            border: none;
+            padding: 15px 45px;
+            font-size: 19px;
+            font-weight: bold;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.15s, filter 0.15s;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.12);
+        }
+        button:active { transform: scale(0.96); }
+        button:hover { filter: brightness(1.08); }
+        
+        .btn-y { background: var(--success); }
+        .btn-n { background: var(--danger); }
+
+        .control-hint { text-align: center; font-size: 14px; color: #95a5a6; margin-top: 8px; }
+        
+        /* Exit Page */
+        .exit-message {
+            text-align: center;
+            font-size: 34px;
+            color: var(--delta-u);
+            font-weight: bold;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="question-page" class="page active">
+            <div class="question-content">
+                <div class="question-text" id="question-text">Assembling scientific matrices...</div>
+                <div class="interaction-prompt" id="interaction-prompt">
+                    👆 Tap here or press ANY key to reveal the equation solution steps
+                </div>
+            </div>
+        </div>
+
+        <div id="answer-page" class="page">
+            <div class="answer-header">Step-by-Step Algebraic Solution</div>
+            <div id="steps-container"></div>
+            <div class="controls" id="controls">
+                <div>
+                    <button class="btn-y" id="btn-yes">Y - Next Scenario</button>
+                    <div class="control-hint">Press 'Y' Key</div>
+                </div>
+                <div>
+                    <button class="btn-n" id="btn-no">N - Exit</button>
+                    <div class="control-hint">Press 'N' Key</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="exit-page" class="page">
+            <div class="question-content">
+                <div class="exit-message">
+                    🎉 Outstanding Work! <br><br> You have perfectly mastered isolating variables in the First Law of Thermodynamics!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Comprehensive dataset of 150 unique physical systems spanning diverse domains
+        const systemsPool = [
+            // Quantum, Optics & Particle Physics (1-20)
+            { sys: "quantum computing core", q_pos: "gains energy from microwave photon containment pulses worth", q_neg: "leaks stray radiation energy out to the refrigerator block worth", w_pos: "has compression work performed on its quantum state by magnetic fields equal to", w_neg: "performs mechanical expansion work against its microscopic trapping barriers worth", dU_pos: "experiences a net internal energy increase of", dU_neg: "experiences a net internal energy decrease of" },
+            { sys: "Bose-Einstein condensate trap", q_pos: "absorbs laser excitation energy worth", q_neg: "emits thermal photons to the cryogenic shielding worth", w_pos: "is compressed by an external magnetic gradient doing work equal to", w_neg: "expands against optical confining forces performing work equal to", dU_pos: "shows a total internal energy rise of", dU_neg: "shows a total internal energy drop of" },
+            { sys: "superconducting qubit array", q_pos: "absorbs flux-bias heating energy worth", q_neg: "dissipates thermal noise to its substrate worth", w_pos: "is mechanically compressed by piezo-actuators doing work equal to", w_neg: "exerts micro-strain work on its housing matrix equal to", dU_pos: "gains a net internal energy total of", dU_neg: "loses a net internal energy total of" },
+            { sys: "synchrotron storage ring plasma", q_pos: "takes in induction heating worth", q_neg: "loses synchrotron radiation energy worth", w_pos: "is compressed by radiofrequency fields doing work worth", w_neg: "does expansion work pushing outward against magnetic lenses worth", dU_pos: "registers an internal energy boost of", dU_neg: "registers an internal energy reduction of" },
+            { sys: "hadron collider target cell", q_pos: "absorbs subatomic fragmentation energy worth", q_neg: "radiates high-energy bremsstrahlung particles worth", w_pos: "is crushed by beam-induced blast pressures doing work of", w_neg: "performs shockwave expansion work against the chamber liners worth", dU_pos: "exhibits an internal energy climb of", dU_neg: "exhibits an internal energy fall of" },
+            { sys: "laser-induced fusion capsule", q_pos: "absorbs symmetrical x-ray driving energy worth", q_neg: "loses bremsstrahlung x-ray transport energy worth", w_pos: "is compressed by imploding ablated plasma doing work equal to", w_neg: "performs explosive hydrodynamic expansion work worth", dU_pos: "develops an internal energy increase of", dU_neg: "develops an internal energy decrease of" },
+            { sys: "optical fiber core segment", q_pos: "absorbs scattered pump laser energy worth", q_neg: "leaks Rayleigh-scattered light energy worth", w_pos: "is squeezed by acoustic wave dampeners doing mechanical work of", w_neg: "expands thermally against its outer protective cladding doing work of", dU_pos: "accumulates an internal energy addition of", dU_neg: "undergoes an internal energy loss of" },
+            { sys: "plasma deflector force field", q_pos: "absorbs thermal power from incoming energy beams worth", q_neg: "glows and radiates visible light energy worth", w_pos: "is compressed by the physical momentum of incoming objects doing work of", w_neg: "expands outwards against field-generator boundaries doing work of", dU_pos: "shows an internal energy change of positive", dU_neg: "shows an internal energy change of negative" },
+            { sys: "photonic crystal cavity", q_pos: "gains electromagnetic field energy worth", q_neg: "leaks light through evanescent decay worth", w_pos: "is compressed via electrostrictive forces doing work equal to", w_neg: "expands via radiation pressure doing mechanical work of", dU_pos: "manifests an internal energy growth of", dU_neg: "manifests an internal energy decline of" },
+            { sys: "gamma-ray burst simulation bubble", q_pos: "receives high-frequency radiative inputs worth", q_neg: "emits thermalized secondary photons worth", w_pos: "is compressed by simulated dark matter boundaries doing work of", w_neg: "does work expanding against virtual grid metrics equal to", dU_pos: "displays an internal energy gain of", dU_neg: "displays an internal energy drop of" },
+            { sys: "matter-antimatter trap matrix", q_pos: "absorbs gamma annihilation energy worth", q_neg: "loses glowing neutrino flux energy worth", w_pos: "is compressed by emergency electrostatic fields doing work of", w_neg: "does work pushing outward against containment magnets equal to", dU_pos: "secures an internal energy increase of", dU_neg: "suffers an internal energy decrease of" },
+            { sys: "superfluid helium-4 vortex", q_pos: "absorbs localized quantum heat pulses worth", q_neg: "transfers kinetic energy via friction to walls worth", w_pos: "is compressed by rotational centrifugal pressures doing work of", w_neg: "expands radially while doing work on nearby fluid worth", dU_pos: "logs an internal energy surplus of", dU_neg: "logs an internal energy deficit of" },
+            { sys: "xenon particle detector drift cell", q_pos: "gains energy from ionizing ionization tracks worth", q_neg: "loses scintillation light energy through windows worth", w_pos: "is mechanically compressed by a sealing piston doing work of", w_neg: "expands against atmospheric pressure seals doing work of", dU_pos: "realizes an internal energy spike of", dU_neg: "realizes an internal energy slump of" },
+            { sys: "magneto-optical atomic trap", q_pos: "absorbs radiative energy from laser cooling beams worth", q_neg: "scatters fluorescence photons out of the apparatus worth", w_pos: "is compressed as magnetic coils narrow the trapping space doing work of", w_neg: "does mechanical work expanding against the light field equal to", dU_pos: "obtains an internal energy increase of", dU_neg: "obtains an internal energy decrease of" },
+            { sys: "high-energy electron gun filament", q_pos: "receives ohmic electrical heating energy worth", q_neg: "loses thermionic emission energy to the vacuum worth", w_pos: "is compressed by structural mounting clamps doing work of", w_neg: "expands due to thermal elongation doing mechanical work of", dU_pos: "yields an internal energy rise of", dU_neg: "yields an internal energy drop of" },
+            { sys: "quantum dot solar cell layer", q_pos: "absorbs incident solar photon streams worth", q_neg: "loses non-radiative recombination heat energy worth", w_pos: "is compressed by upper substrate protective expansion doing work of", w_neg: "does work expanding against the bottom electrode layer worth", dU_pos: "experiences an internal energy jump of", dU_neg: "experiences an internal energy drop of" },
+            { sys: "graphene plasmon waveguide", q_pos: "absorbs infrared wave resonance energy worth", q_neg: "loses scattering energy into substrate boundaries worth", w_pos: "is compressed by electrostatic gating fields doing work equal to", w_neg: "performs physical work expanding against mechanical supports worth", dU_pos: "measures an internal energy climb of", dU_neg: "measures an internal energy reduction of" },
+            { sys: "muon-catalyzed fusion chamber", q_pos: "gains energy from localized nuclear bonding worth", q_neg: "loses fast kinetic energy via escaping neutrons worth", w_pos: "is compressed by acoustic cavitation waves doing work of", w_neg: "drives gas expansion against internal acoustic sensors doing work of", dU_pos: "registers an internal energy addition of", dU_neg: "registers an internal energy subtraction of" },
+            { sys: "relativistic electron cloud", q_pos: "gains energy via microwave acceleration cavities worth", q_neg: "loses energy due to synchrotron beam-dump filtering worth", w_pos: "is compressed into a tight pack by magnetic focusing lenses doing work of", w_neg: "expands radially due to space-charge repulsion doing work of", dU_pos: "takes on an internal energy elevation of", dU_neg: "takes on an internal energy decline of" },
+            { sys: "optical molasses atomic cloud", q_pos: "absorbs modulated light energy worth", q_neg: "re-radiates random spontaneous emission energy worth", w_pos: "is squeezed by external quadrupole field vectors doing work of", w_neg: "performs work expanding outward against light viscous friction worth", dU_pos: "exhibits an internal energy adjustment of positive", dU_neg: "exhibits an internal energy adjustment of negative" },
+
+            // Aerospace, Marine & Rocketry (21-40)
+            { sys: "ion thruster discharge zone", q_pos: "gains energy from plasma arc heating worth", q_neg: "loses heat radiated through structural fins worth", w_pos: "is compressed by external magnetic pressure injection doing work of", w_neg: "expands into the vacuum nozzle performing acceleration work worth", dU_pos: "harbors an internal energy increase of", dU_neg: "harbors an internal energy decrease of" },
+            { sys: "deep-space probe fuel bladder", q_pos: "absorbs thermal energy from radioactive heater units worth", q_neg: "radiates thermal energy into the dark vacuum worth", w_pos: "is compressed by pressurant helium gas doing mechanical work of", w_neg: "expands to push hydrazine into lines doing external work of", dU_pos: "retains an internal energy growth of", dU_neg: "retains an internal energy drop of" },
+            { sys: "hypersonic scramjet isolator", q_pos: "gains energy from shockwave compression friction worth", q_neg: "loses heat conducted to the liquid-cooled walls worth", w_pos: "is compressed by incoming supersonic ram air doing work equal to", w_neg: "forces gas expansion past internal mixing guide vanes doing work of", dU_pos: "sustains an internal energy increase of", dU_neg: "sustains an internal energy decrease of" },
+            { sys: "deep-sea bathyscaphe ballast tank", q_pos: "gains thermal energy from seawater friction compression worth", q_neg: "loses heat conduction to the freezing abyssal currents worth", w_pos: "is compressed internally as massive ocean depth pressure squeezes walls doing work of", w_neg: "expands compressed air outward to expel water doing work of", dU_pos: "undergoes an internal energy rise of", dU_neg: "undergoes an internal energy drop of" },
+            { sys: "solid rocket motor core", q_pos: "gains chemical energy from propellant combustion worth", q_neg: "loses heat radiated to the outer graphite casing worth", w_pos: "is compressed by internal gas ignition acoustic reflection doing work of", w_neg: "performs high-volume gaseous expansion work through the nozzle worth", dU_pos: "secures a net internal energy climb of", dU_neg: "secures a net internal energy plunge of" },
+            { sys: "mars helicopter battery core", q_pos: "absorbs solar panel warming energy worth", q_neg: "loses heat energy to the chilly martian thin air worth", w_pos: "is compressed by structural contractions of the housing doing work of", w_neg: "performs work powering the dual coaxial rotors during lift worth", dU_pos: "obtains an internal energy expansion of", dU_neg: "obtains an internal energy contraction of" },
+            { sys: "storable bipropellant combustion chamber", q_pos: "gains thermal energy from hypergolic reaction ignition worth", q_neg: "loses energy via cooling jacket fuel flow absorption worth", w_pos: "is compressed by mechanical propellant turbopumps doing work of", w_neg: "performs gaseous expansion work driving turbine blades worth", dU_pos: "reaches an internal energy expansion of positive", dU_neg: "reaches an internal energy depletion of negative" },
+            { sys: "autonomous submarine hydraulic bladder", q_pos: "gains energy from pump motor electrical losses worth", q_neg: "loses heat energy into surrounding Arctic currents worth", w_pos: "is squeezed compressed by deep ocean hydro-static force doing work of", w_neg: "expands against sea pressure to actuate control surfaces doing work of", dU_pos: "reflects an internal energy addition of", dU_neg: "reflects an internal energy subtraction of" },
+            { sys: "stratospheric weather balloon gas pocket", q_pos: "absorbs direct ultraviolet solar radiation worth", q_neg: "loses heat via tropopause ambient convection worth", w_pos: "is compressed by high atmospheric wind gusts doing work of", w_neg: "expands in volume against decreasing external air pressure doing work of", dU_pos: "develops an internal energy surge of", dU_neg: "develops an internal energy retreat of" },
+            { sys: "plasma-assisted aerodynamic actuator", q_pos: "gains energy from localized electrical glow discharges worth", q_neg: "loses energy via boundary layer air thermal convection worth", w_pos: "is compressed by supersonic incoming air shock fronts doing work of", w_neg: "performs work expanding outwards to re-direct airflow patterns worth", dU_pos: "captures an internal energy increase of", dU_neg: "captures an internal energy decrease of" },
+            { sys: "aircraft cabin environmental chamber", q_pos: "receives heat from engine bleed-air lines worth", q_neg: "loses heat through fuselage insulation conduction worth", w_pos: "is compressed by the inflow air cabin supercharger doing work of", w_neg: "expands air out through the cabin outflow valve doing work of", dU_pos: "registers an internal energy rise of", dU_neg: "registers an internal energy drop of" },
+            { sys: "orbital capsule reentry heat shield", q_pos: "absorbs thermal energy from shock-layer air plasma worth", q_neg: "loses energy via mechanical ablation mass shedding worth", w_pos: "is compressed by extreme atmospheric drag deceleration doing work of", w_neg: "performs mechanical work expanding due to structural thermal stress worth", dU_pos: "holds a net internal energy expansion of", dU_neg: "holds a net internal energy depletion of" },
+            { sys: "high-altitude drone fuel cell", q_pos: "gains energy from hydrogen electrochemical reaction worth", q_neg: "loses heat to radiator glycol flow lines worth", w_pos: "is compressed by incoming supercharged air feed systems doing work of", w_neg: "expands gaseous water vapor exhaust against exhaust ports doing work of", dU_pos: "measures an internal energy gain of", dU_neg: "measures an internal energy loss of" },
+            { sys: "liquefied natural gas carrier tank", q_pos: "absorbs ambient environmental boil-off heat worth", q_neg: "loses heat to localized liquid re-liquefaction arrays worth", w_pos: "is compressed by high-seas sloshing motion wave impacts doing work of", w_neg: "expands gas out through relief vaporizers performing work of", dU_pos: "shows a net internal energy increase of", dU_neg: "shows a net internal energy decrease of" },
+            { sys: "torpedo thermal steam generator", q_pos: "gains heat from burning magnesium fuel tracks worth", q_neg: "loses energy to exhaust pipe metal conduction worth", w_pos: "is compressed by incoming seawater high pressure injection doing work of", w_neg: "performs mechanical work spinning counter-rotating propellers worth", dU_pos: "demonstrates an internal energy climb of", dU_neg: "demonstrates an internal energy fall of" },
+            { sys: "satellite momentum wheel bearing", q_pos: "gains energy via rotational friction dissipation worth", q_neg: "radiates thermal energy out through copper heat straps worth", w_pos: "is compressed by structural preload mounting bolts doing work of", w_neg: "does work expanding slightly against the outer retainer ring worth", dU_pos: "reports an internal energy accumulation of", dU_neg: "reports an internal energy thinning of" },
+            { sys: "variable-geometry exhaust nozzle", q_pos: "absorbs heat from rushing core exhaust gases worth", q_neg: "loses heat via structural bypass fan air streams worth", w_pos: "is compressed by hydraulic actuation arms closing down doing work of", w_neg: "expands outward pushing against mechanical servo linkages doing work of", dU_pos: "undergoes an internal energy addition of", dU_neg: "undergoes an internal energy reduction of" },
+            { sys: "space station cupola window seal", q_pos: "absorbs direct sunlight radiant solar bursts worth", q_neg: "loses heat by radiating into deep space shadow worth", w_pos: "is compressed by cabin atmospheric pressure walls doing work of", w_neg: "expands against structural frame rubber gaskets doing work of", dU_pos: "experiences a net internal energy jump of", dU_neg: "experiences a net internal energy slump of" },
+            { sys: "underwater seismic sensor sphere", q_pos: "gains thermal energy from electronic component circuits worth", q_neg: "loses heat via dissipation into deep trench waters worth", w_pos: "is compressed by deep silt mud layer weights doing work of", w_neg: "performs expansion work against outer protective metal bladders worth", dU_pos: "shows a total internal energy expansion of", dU_neg: "shows a total internal energy compression of" },
+            { sys: "lunar lander landing leg shock absorber", q_pos: "gains energy from rapid internal oil fluid friction worth", q_neg: "loses heat energy via radiant structural frame pathways worth", w_pos: "is compressed by spacecraft impact forces touching ground doing work of", w_neg: "expands its rebound internal spring mechanisms doing mechanical work of", dU_pos: "secures an internal energy adjustment of positive", dU_neg: "secures an internal energy adjustment of negative" },
+
+            // Robotics, Cybernetics & Electronics (41-60)
+            { sys: "humanoid robot bicep actuator", q_pos: "gains thermal energy from electric motor core resistance worth", q_neg: "loses energy via forced air cooling micro-fans worth", w_pos: "is compressed by external heavy weight lifting resistances doing work of", w_neg: "performs mechanical work expanding its carbon fiber band fibers worth", dU_pos: "collects a net internal energy climb of", dU_neg: "collects a net internal energy drop of" },
+            { sys: "cybernetic limb bionic neural chip", q_pos: "absorbs energy from bio-electric amplifier pulses worth", q_neg: "loses heat energy conducted into subdermal bone anchors worth", w_pos: "is compressed by muscle contraction movement stresses doing work of", w_neg: "performs micro-mechanical flexing work against silicon boundaries worth", dU_pos: "yields an internal energy increase of", dU_neg: "yields an internal energy decrease of" },
+            { sys: "high-performance AI server processor core", q_pos: "gains heat energy from massive transistor shifting friction worth", q_neg: "loses heat energy to a circulating liquid cooling plate worth", w_pos: "is compressed tightly by clamping heatsink structural springs doing work of", w_neg: "does mechanical work expanding thermally against chip socket clips worth", dU_pos: "accumulates an internal energy expansion of", dU_neg: "accumulates an internal energy contraction of" },
+            { sys: "military drone steerable camera gimbal", q_pos: "gains thermal energy from high-frequency servo current worth", q_neg: "loses heat to high-altitude cold ambient air currents worth", w_pos: "is squeezed by aerodynamic air resistance force buffeting doing work of", w_neg: "performs orientation stabilization work moving lens structures worth", dU_pos: "takes on a net internal energy elevation of", dU_neg: "takes on a net internal energy deduction of" },
+            { sys: "underwater ROV manipulator wrist", q_pos: "absorbs heat from high-pressure hydraulic fluid friction worth", q_neg: "loses heat via direct contact with cold ocean water worth", w_pos: "is compressed by heavy ocean floor rock load pressure doing work of", w_neg: "does work expanding out its high-torque rotational gearing pistons worth", dU_pos: "registers an internal energy expansion of", dU_neg: "registers an internal energy contraction of" },
+            { sys: "augmented reality smart glasses battery", q_pos: "gains energy from micro-wireless induction charger arrays worth", q_neg: "loses heat via frame dissipation into the atmosphere worth", w_pos: "is compressed by frame-folding mechanical hinge clamping doing work of", w_neg: "performs internal structural work expanding active anode matrices worth", dU_pos: "measures a net internal energy addition of", dU_neg: "measures a net internal energy loss of" },
+            { sys: "robotic exorifle compression piston", q_pos: "absorbs heat from rapid weapon gas recoil ventilation worth", q_neg: "loses heat radiated to tactical barrel shroud shielding worth", w_pos: "is compressed by manual structural cocking handle levers doing work of", w_neg: "expands forward pushing heavy projectiles out doing work of", dU_pos: "shows an internal energy change of positive", dU_neg: "shows an internal energy change of negative" },
+            { sys: "industrial robotic arm welding knuckle", q_pos: "absorbs heat from active electrical high-amp arcs worth", q_neg: "loses heat to a cooling gas flow nozzle system worth", w_pos: "is compressed by high mechanical stamping counter-forces doing work of", w_neg: "does mechanical work twisting carbon assembly frames equal to", dU_pos: "logs an internal energy surplus of", dU_neg: "logs an internal energy deficit of" },
+            { sys: "bionic exoskeleton spine plate", q_pos: "gains thermal energy from integrated power bus leakage worth", q_neg: "loses heat energy into a ventilation mesh vest layer worth", w_pos: "is compressed by heavy pilot backpack gravitational load doing work of", w_neg: "expands out against heavy cargo hoisting arms doing mechanical work of", dU_pos: "captures an internal energy increase of", dU_neg: "captures an internal energy decrease of" },
+            { sys: "medical surgery drone micro-needle", q_pos: "gains energy from high-frequency ultrasonic vibration friction worth", q_neg: "loses heat energy conducted into patient sterile tissue worth", w_pos: "is compressed by dense muscular tissue counter-resistance doing work of", w_neg: "performs mechanical work expanding its internal quartz crystals worth", dU_pos: "displays an internal energy step-up of", dU_neg: "displays an internal energy step-down of" },
+            { sys: "tactical android hearing sensor diaphragm", q_pos: "absorbs energy from incoming intense acoustic shockwaves worth", q_neg: "loses heat conducted to inner metallic skull brackets worth", w_pos: "is compressed inward by sound pressure wave vibrations doing work of", w_neg: "expands outward pushing back micro-damping springs doing work of", dU_pos: "retains an internal energy increase of", dU_neg: "retains an internal energy decrease of" },
+            { sys: "automated micro-pipette stepper motor", q_pos: "gains heat from electrical winding resistance pulses worth", q_neg: "loses heat to ambient cleanroom laminar airflow worth", w_pos: "is compressed by liquid column high viscosity backpressures doing work of", w_neg: "does mechanical work expanding plungers down to expel fluid worth", dU_pos: "manifests an internal energy growth of", dU_neg: "manifests an internal energy shrinkage of" },
+            { sys: "autonomous drone delivery winch drum", q_pos: "absorbs heat from electromagnetic braking friction worth", q_neg: "loses heat to air cooling ventilation slots equal to", w_pos: "is squeezed by cable tension load pulling during sudden drops doing work of", w_neg: "performs work expanding out wire line lengths to release packages worth", dU_pos: "secures an internal energy rise of", dU_neg: "secures an internal energy drop of" },
+            { sys: "piezoelectric micro-actuator beam", q_pos: "gains energy from high-voltage dielectric charging tracks worth", q_neg: "loses heat via structural substrate conduction points worth", w_pos: "is compressed down by micro-mirror lever counterweights doing work of", w_neg: "does mechanical work expanding outward to reposition fiber optics worth", dU_pos: "carries a net internal energy boost of", dU_neg: "carries a net internal energy drain of" },
+            { sys: "warehouse automated forklift power pack", q_pos: "absorbs heat from fast high-current recharging terminals worth", q_neg: "loses heat conducted to the heavy steel floor chassis worth", w_pos: "is compressed by physical impacts from bumpy floor vibration doing work of", w_neg: "performs external work lifting multi-ton pallet stacks equal to", dU_pos: "undergoes an internal energy gain of", dU_neg: "undergoes an internal energy loss of" },
+            { sys: "robotic exploration rover wheel motor", q_pos: "gains heat from stalling torque winding currents worth", q_neg: "loses heat to cold planetary soil surfaces via conduction worth", w_pos: "is compressed as the rover falls into sand trap craters doing work of", w_neg: "does work driving the planetary chassis up steep slope loose gravel worth", dU_pos: "develops an internal energy expansion of", dU_neg: "develops an internal energy contraction of" },
+            { sys: "subdermal medical drug infusion pump", q_pos: "absorbs heat from localized metabolic tissue warmth worth", q_neg: "loses heat to chilled fluid drug reservoir refills worth", w_pos: "is compressed by patient abdominal muscle movement shifts doing work of", w_neg: "performs mechanical work expanding its micro-bellows to squeeze out fluid worth", dU_pos: "harbors an internal energy increase of", dU_neg: "harbors an internal energy decrease of" },
+            { sys: "automated drone swarm telemetry antenna", q_pos: "gains energy from high-power radio frequency reflections worth", q_neg: "loses heat via radiant space-facing emissive paint worth", w_pos: "is compressed by severe high-velocity air boundary compression doing work of", w_neg: "does mechanical work extending its telescoping rod components worth", dU_pos: "reflects an internal energy addition of", dU_neg: "reflects an internal energy subtraction of" },
+            { sys: "haptic force-feedback vest bladder", q_pos: "absorbs thermal energy from internal compressor pump pipes worth", q_neg: "loses heat through mesh lining convection air paths worth", w_pos: "is compressed tightly by the user chest expanding during breathing doing work of", w_neg: "performs work expanding outward to press user chest wall muscles worth", dU_pos: "shows an internal energy adjustment of positive", dU_neg: "shows an internal energy adjustment of negative" },
+            { sys: "unmanned sub-surface glidertracker", q_pos: "gains energy from thermo-acoustic ocean temperature gradients worth", q_neg: "loses heat to freezing abyssal deep trenches worth", w_pos: "is compressed by massive vertical hydrostatic column shifts doing work of", w_neg: "performs external work adjusting buoyancy engine foil surfaces worth", dU_pos: "secures an internal energy increase of", dU_neg: "secures an internal energy decrease of" },
+
+            // Geology, Geophysics & Earth Systems (61-80)
+            { sys: "deep magma pocket chamber", q_pos: "gains thermal energy from mantle core upwellings worth", q_neg: "loses heat conducted into surrounding bedrock strata worth", w_pos: "is compressed by settling tectonic rock layers collapsing inward doing work of", w_neg: "performs work expanding outward fracturing surrounding granite crust worth", dU_pos: "experiences an internal energy climb of", dU_neg: "experiences an internal energy descent of" },
+            { sys: "hydrothermal vent mineral chimney", q_pos: "absorbs heat from superheated abyssal mineral fluids worth", q_neg: "loses heat to freezing ocean water cross-currents worth", w_pos: "is compressed by extreme ocean weight column hydrostatic pressures doing work of", w_neg: "does work expanding out gas and mineral precipitate plumes worth", dU_pos: "yields a net internal energy addition of", dU_neg: "yields a net internal energy subtraction of" },
+            { sys: "tectonic plate fault gouge zone", q_pos: "gains immense heat from frictional shear sliding movements worth", q_neg: "loses heat via conduction into deep aquifer water flows worth", w_pos: "is compressed intensely by massive horizontal crust converging forces doing work of", w_neg: "does mechanical work expanding rock fractures open during a rupture worth", dU_pos: "accumulates an internal energy expansion of", dU_neg: "accumulates an internal energy thinning of" },
+            { sys: "active volcanic geyser conduit", q_pos: "gains heat from localized subterranean steam pockets worth", q_neg: "loses heat to surface ground water infiltration paths worth", w_pos: "is compressed by heavy surrounding limestone rock walls shifting doing work of", w_neg: "does mechanical work expanding and blasting water high into the air worth", dU_pos: "registers an internal energy surge of", dU_neg: "registers an internal energy drop of" },
+            { sys: "subglacial volcano ice cavity", q_pos: "absorbs intense heat from venting basaltic lava flows worth", q_neg: "loses energy melting massive overlying glacier ice matrices worth", w_pos: "is compressed by thousands of meters of moving heavy ice load doing work of", w_neg: "does work expanding gaseous steam bubbles against glacial cracks worth", dU_pos: "shows a total internal energy increase of", dU_neg: "shows a total internal energy decrease of" },
+            { sys: "oceanic subduction shear zone", q_pos: "gains heat from subducting crust friction dragging worth", q_neg: "loses heat to ocean crust water dehydration processes worth", w_pos: "is compressed by the massive descending oceanic lithosphere doing work of", w_neg: "does work expanding outward creating local continental thrust faults worth", dU_pos: "captures an internal energy growth of", dU_neg: "captures an internal energy reduction of" },
+            { sys: "methane hydrate seabed sediment", q_pos: "absorbs heat from warm rising deep deep-sea currents worth", q_neg: "loses heat via cold water benthic boundary flows worth", w_pos: "is compressed by heavy deep sea marine snow deposit loads doing work of", w_neg: "performs work expanding out gas bubble lattices into ocean waters worth", dU_pos: "logs an internal energy rise of", dU_neg: "logs an internal energy fall of" },
+            { sys: "mantle plume kimberlite pipe", q_pos: "gains energy from deep core thermal boundaries worth", q_neg: "loses heat conducting into ancient continental craton roots worth", w_pos: "is compressed by narrowing craton wall rock structures doing work of", w_neg: "performs explosive supersonic gas expansion work up towards surface worth", dU_pos: "manifests an internal energy increase of", dU_neg: "manifests an internal energy decrease of" },
+            { sys: "continental rift valley floor crust", q_pos: "gains thermal energy from ascending asthenosphere magmas worth", q_neg: "loses heat via surface radiant atmospheric cooling loops worth", w_pos: "is compressed by sedimentary basin mountain landslide falls doing work of", w_neg: "performs mechanical expansion work pulling apart crust borders worth", dU_pos: "secures an internal energy expansion of", dU_neg: "secures an internal energy collapse of" },
+            { sys: "deep crystalline rock salt dome", q_pos: "absorbs radiant decay heat from basement granites worth", q_neg: "loses heat via overlying salt marsh ground water convection worth", w_pos: "is compressed by shifting tectonic mountain squeeze forces doing work of", w_neg: "does work expanding buoyantly upward piercing rock sediment caps worth", dU_pos: "develops an internal energy increase of", dU_neg: "develops an internal energy decrease of" },
+            { sys: "subterranean karst cavern air pocket", q_pos: "absorbs heat from warm summer groundwater drip patterns worth", q_neg: "loses heat to cool cave limestone bedrock walls worth", w_pos: "is compressed by atmospheric barometric high pressure shifts doing work of", w_neg: "expands outward performing mechanical work pushing air out cave mouths worth", dU_pos: "holds an internal energy boost of", dU_neg: "holds an internal energy drainage of" },
+            { sys: "antarctic subglacial lake liquid layer", q_pos: "gains heat from bedrock geothermal upwelling streams worth", q_neg: "loses heat to the massive freezing ceiling ice sheet worth", w_pos: "is compressed by high pressure ice flow down-warping actions doing work of", w_neg: "expands fluid volumes out against freezing border block gates doing work of", dU_pos: "measures a net internal energy climb of", dU_neg: "measures a net internal energy slump of" },
+            { sys: "desert sand dune air matrix", q_pos: "absorbs intense daytime solar shortwave radiation worth", q_neg: "loses heat via overnight longwave space radiation cooling worth", w_pos: "is compressed tightly by heavy shifting wind sand burial weights doing work of", w_neg: "expands outward performing air displacement work between sand grains worth", dU_pos: "reflects an internal energy gain of", dU_neg: "reflects an internal energy loss of" },
+            { sys: "granite batholith crystallization body", q_pos: "absorbs thermal energy from surrounding high grade metamorphic rocks worth", q_neg: "loses heat slowly via cooling silica crystallization paths worth", w_pos: "is compressed by vertical lithostatic weight overburden doing work of", w_neg: "does work expanding against host rock layers fracturing country borders worth", dU_pos: "shows an internal energy step-up of", dU_neg: "shows an internal energy step-down of" },
+            { sys: "permafrost active tundra soil cell", q_pos: "absorbs solar heat during seasonal climate warming spikes worth", q_neg: "loses heat to winter atmospheric freezing wind cells worth", w_pos: "is compressed by massive frost-heaving ice lens expansion doing work of", w_neg: "performs mechanical work expanding soil columns upward lifting terrain worth", dU_pos: "undergoes an internal energy climb of", dU_neg: "undergoes an internal energy fall of" },
+            { sys: "deep crustal shear aquifer zone", q_pos: "gains thermal energy from seismic sound friction waves worth", q_neg: "loses heat conduction into low temperature quartz veins worth", w_pos: "is compressed tightly by crustal folding mountain stresses doing work of", w_neg: "does work expanding structural pore spaces open filtering fluid worth", dU_pos: "harbors a net internal energy elevation of", dU_neg: "harbors a net internal energy drop of" },
+            { sys: "mid-ocean ridge axial valley rift", q_pos: "gains energy from direct hydrothermal magma injections worth", q_neg: "loses heat to cold benthic ocean water wall cooling worth", w_pos: "is compressed by falling central graben block faulted rock landslides doing work of", w_neg: "performs work pushing ocean floor plates apart laterally worth", dU_pos: "collects an internal energy expansion of", dU_neg: "collects an internal energy thinning of" },
+            { sys: "deep core-mantle boundary layer", q_pos: "gains heat from outer core liquid metal radiation worth", q_neg: "loses heat conducting up into lower mantle silicate rocks worth", w_pos: "is compressed by sinking oceanic slab lithospheric graveyards doing work of", w_neg: "performs expansion work starting dynamic thermal mantle plumes worth", dU_pos: "takes on a net internal energy gain of", dU_neg: "takes on a net internal energy deficit of" },
+            { sys: "shale gas fracture cluster cell", q_pos: "absorbs heat from injected hydraulic chemical slurries worth", q_neg: "loses heat conducting to cold overhead clay layers worth", w_pos: "is compressed by high pressure mechanical surface pumps doing work of", w_neg: "does mechanical work expanding rock seams opening gas discharge pathways worth", dU_pos: "registers an internal energy change of positive", dU_neg: "registers an internal energy change of negative" },
+            { sys: "ancient impact crater melt sheet", q_pos: "gains heat energy from kinetic shockwave friction deposits worth", q_neg: "loses heat via rapid surface pool evaporation radiation worth", w_pos: "is compressed by falling rim ejecta debris layer weights doing work of", w_neg: "does mechanical work expanding outward tilting bedrock ring structures worth", dU_pos: "secures a net internal energy addition of", dU_neg: "secures a net internal energy reduction of" },
+
+            // Nanotechnology & Advanced Materials (81-110)
+            { sys: "carbon nanotube linear actuator", q_pos: "absorbs electrical current pulse joule energy worth", q_neg: "loses heat via ambient carrier liquid conduction lines worth", w_pos: "is compressed back by mechanical external micro-spring weights doing work of", w_neg: "performs external work expanding out lifting micro-silicon gates worth", dU_pos: "experiences an internal energy climb of", dU_neg: "experiences an internal energy decline of" },
+            { sys: "shape-memory alloy micro-wire", q_pos: "gains heat inducing crystalline lattice transitions worth", q_neg: "loses heat to adjacent cooling substrate frames worth", w_pos: "is stretched compressed by external weights trying to extend it doing work of", w_neg: "does active physical work expanding to recover its set shape worth", dU_pos: "yields a net internal energy boost of", dU_neg: "yields a net internal energy depletion of" },
+            { sys: "piezoelectric crystal stack cylinder", q_pos: "absorbs dielectric charge polarization heat energy worth", q_neg: "loses heat conducted out through copper wire contacts worth", w_pos: "is compressed by external heavy mechanical lever loads doing work of", w_neg: "performs mechanical work expanding its layout to push massive mirrors worth", dU_pos: "accumulates an internal energy expansion of", dU_neg: "accumulates an internal energy shrinking of" },
+            { sys: "aerogel insulation blanket panel", q_pos: "absorbs ambient infra-red radiant heat blast energy worth", q_neg: "loses heat conducting down to cooling wall frames worth", w_pos: "is compressed mechanically by atmospheric shock sound waves doing work of", w_neg: "does work expanding out porous matrix shapes after crush impacts worth", dU_pos: "registers an internal energy surge of", dU_neg: "registers an internal energy drop of" },
+            { sys: "magnetic nanoparticle slurry cell", q_pos: "gains heat from high frequency alternating magnetic fields worth", q_neg: "loses heat conducted into surrounding biological tissue worth", w_pos: "is compressed into tight clusters by magnetic focus arrays doing work of", w_neg: "does fluid displacement work expanding its spatial distribution worth", dU_pos: "shows a total internal energy increase of", dU_neg: "shows a total internal energy decrease of" },
+            { sys: "graphene oxide hydrogel matrix", q_pos: "absorbs laser-induced photothermal radiation energy worth", q_neg: "loses heat via cooling water evaporation tracks worth", w_pos: "is compressed by polymeric containment walls tightening doing work of", w_neg: "does work expanding out swelling structure to eject water layers worth", dU_pos: "captures an internal energy addition of", dU_neg: "captures an internal energy loss of" },
+            { sys: "molecular gear nano-assembly", q_pos: "absorbs chemical binding energy from solvent molecules worth", q_neg: "loses heat via thermal dissipation into fluid media worth", w_pos: "is compressed mechanically by adjacent nanorobot arms doing work of", w_neg: "performs rotational expansion work driving molecular shafts worth", dU_pos: "logs an internal energy rise of", dU_neg: "logs an internal energy drop of" },
+            { sys: "self-healing polymer capsule cell", q_pos: "absorbs heat from friction along material micro-cracks worth", q_neg: "loses heat conducting into bulk plastic structural masses worth", w_pos: "is compressed by structural load clamping forces closing down doing work of", w_neg: "does work expanding its internal liquid monomer out into cracks worth", dU_pos: "manifests an internal energy growth of", dU_neg: "manifests an internal energy retreat of" },
+            { sys: "magnetostrictive alloy rods unit", q_pos: "gains energy from inductive coil electromagnetic transfers worth", q_neg: "loses heat via structural convection ventilation paths worth", w_pos: "is compressed by mechanical safety end-cap bolts doing work of", w_neg: "performs work expanding along its primary axis shifting lens blocks worth", dU_pos: "secures an internal energy rise of", dU_neg: "secures an internal energy fall of" },
+            { sys: "synthetic diamond anvil cell", q_pos: "absorbs heat from core heating laser focal points worth", q_neg: "loses heat radiating through transparent gemstone faces worth", w_pos: "is compressed by dual driving hydraulic screw rams doing work of", w_neg: "performs small expansion work against sealing metal gasket frames worth", dU_pos: "develops an internal energy expansion of", dU_neg: "develops an internal energy compression of" },
+            { sys: "vanadium redox flow battery electrolyte", q_pos: "absorbs heat during rapid electrochemical cell power phases worth", q_neg: "loses heat to tank wall thermal convection circuits worth", w_pos: "is compressed by high velocity circulation pump impellers doing work of", w_neg: "does mechanical work expanding through membrane porous channels worth", dU_pos: "holds an internal energy increase of", dU_neg: "holds an internal energy decrease of" },
+            { sys: "metamaterial acoustic cloaking shell", q_pos: "absorbs energy from redirected background sound wave streams worth", q_neg: "loses heat via structural internal resonance damping worth", w_pos: "is compressed by oncoming sub-surface sonar wave wavefronts doing work of", w_neg: "does micro-expansion work shifting local grid density states worth", dU_pos: "measures a net internal energy climb of", dU_neg: "measures a net internal energy drop of" },
+            { sys: "superhydrophobic droplet surface system", q_pos: "absorbs thermal energy from boiling vapor ambient drops worth", q_neg: "loses heat via conduction to sub-cooled brass bases worth", w_pos: "is compressed by dropping water column impact landing masses doing work of", w_neg: "performs trampoline-like expansion rebound work launching drops worth", dU_pos: "reflects an internal energy addition of", dU_neg: "reflects an internal energy subtraction of" },
+            { sys: "perovskite crystal thin film", q_pos: "absorbs solar simulator light spectrum energy worth", q_neg: "loses heat via radiative electron-phonon decay paths worth", w_pos: "is compressed by mechanical glass sandwich casing clamps doing work of", w_neg: "does work expanding slightly against flexible polymer backings worth", dU_pos: "shows an internal energy step-up of", dU_neg: "shows an internal energy step-down of" },
+            { sys: "amorphous liquid metal spring block", q_pos: "gains heat energy from extreme cyclical vibration fatigue worth", q_neg: "loses heat conducting down to heavy anvil foundation beds worth", w_pos: "is compressed by multi-ton drops forge hammer faces doing work of", w_neg: "performs work expanding elastically back to original height worth", dU_pos: "undergoes an internal energy rise of", dU_neg: "undergoes an internal energy fall of" },
+            { sys: "thermoplastic polyurethane elastomer unit", q_pos: "absorbs heat from intense structural twisting stresses worth", q_neg: "loses heat radiating to surrounding atmosphere walls worth", w_pos: "is compressed axially under severe structural column test rigs doing work of", w_neg: "performs mechanical work expanding back to rest dimension shapes worth", dU_pos: "harbors an internal energy boost of", dU_neg: "harbors an internal energy drainage of" },
+            { sys: "dielectric elastomer artificial muscle", q_pos: "gains energy from high potential electrostatic fields worth", q_neg: "loses heat via thermal dissipation into frame clips worth", w_pos: "is compressed into flat layers by contracting charge faces doing work of", w_neg: "performs mechanical work expanding along its length lifting rods worth", dU_pos: "collects a net internal energy climb of", dU_neg: "collects a net internal energy drop of" },
+            { sys: "phosphorene monolayer nanosheet", q_pos: "absorbs photon pulses from ultraviolet laser diodes worth", q_neg: "loses heat conducting to underlying silicon dioxide targets worth", w_pos: "is squeezed compressed by atomic force microscope tip probes doing work of", w_neg: "performs work expanding outward against surface tension boundaries worth", dU_pos: "takes on a net internal energy gain of", dU_neg: "takes on a net internal energy deficit of" },
+            { sys: "metallic glass micro-gear matrix", q_pos: "absorbs heat from continuous high rpm tooth sliding friction worth", q_neg: "loses heat to a surrounding lubrication fluid bath worth", w_pos: "is compressed by mechanical drive shaft torque inputs doing work of", w_neg: "does mechanical work expanding outer teeth to slide load wheels forward worth", dU_pos: "registers an internal energy change of positive", dU_neg: "registers an internal energy change of negative" },
+            { sys: "fluoropolymer electrocaloric layer", q_pos: "absorbs heat from linked computer electronic chips worth", q_neg: "loses heat shifting phases dumping energy to cool plates worth", w_pos: "is compressed by electric field layout alignment forces doing work of", w_neg: "does mechanical work expanding outward against casing seals worth", dU_pos: "secures an internal energy addition of", dU_neg: "secures an internal energy reduction of" },
+
+            // Astronomy, Astrophysics & Space (111-130)
+            { sys: "comet ice core mantle", q_pos: "absorbs radiant thermal energy during close perihelion sun passes worth", q_neg: "loses heat radiating longwave light into deep space shadow worth", w_pos: "is compressed by falling crust dust collapse landslides doing work of", w_neg: "does work expanding out gas sublimation vapor jets into space worth", dU_pos: "experiences an internal energy climb of", dU_neg: "experiences an internal energy descent of" },
+            { sys: "neutron star crust crystal matrix", q_pos: "absorbs thermal energy from internal core neutrino decay worth", q_neg: "loses energy radiating extreme X-ray beam pulses worth", w_pos: "is compressed by extreme relativistic gravitational forces doing work of", w_neg: "performs expansion work during starquake crust fractures worth", dU_pos: "yields an internal energy increase of", dU_neg: "yields an internal energy decrease of" },
+            { sys: "interstellar gas molecular cloud", q_pos: "absorbs radiant energy from nearby supernova shockfronts worth", q_neg: "loses energy radiating sub-millimeter radio waves worth", w_pos: "is compressed by localized gravitational collapse pulling inward doing work of", w_neg: "expands outward performing work against ambient galactic gas worth", dU_pos: "accumulates an internal energy expansion of", dU_neg: "accumulates an internal energy thinning of" },
+            { sys: "solar wind proton stream bundle", q_pos: "absorbs heat from coronal magnetic reconnection bursts worth", q_neg: "loses energy via charge exchange interactions with neutrals worth", w_pos: "is compressed by interplanetary magnetic sector boundaries doing work of", w_neg: "performs spatial expansion work driving out against heliopause limits worth", dU_pos: "registers an internal energy surge of", dU_neg: "registers an internal energy drop of" },
+            { sys: "pulsar wind nebula plasma shell", q_pos: "gains energy from high energy particle injection from the central star worth", q_neg: "loses energy via broad-spectrum synchrotron radiation emissions worth", w_pos: "is compressed by incoming supernova shell backward shocks doing work of", w_neg: "performs rapid work expanding out into interstellar space voids worth", dU_pos: "shows a total internal energy increase of", dU_neg: "shows a total internal energy decrease of" },
+            { sys: "protostellar accretion disk torus", q_pos: "gains thermal energy from viscous gas friction shear lines worth", q_neg: "loses heat radiating infrared energy out to space fields worth", w_pos: "is compressed by vertical gravitational gas settling forces doing work of", w_neg: "performs expansion work launching bipolar gas jets outwards worth", dU_pos: "captures an internal energy addition of", dU_neg: "captures an internal energy loss of" },
+            { sys: "white dwarf degenerate core", q_pos: "gains thermal energy from carbon-oxygen ion settling worth", q_neg: "loses heat via extremely slow thermal blackbody leakage worth", w_pos: "is compressed down by extreme electron degeneracy pressure limits doing work of", w_neg: "performs work expanding outer envelopes during rare nova flare events worth", dU_pos: "logs an internal energy rise of", dU_neg: "logs an internal energy drop of" },
+            { sys: "lunar exosphere gas cell", q_pos: "absorbs solar extreme ultraviolet photon radiation worth", q_neg: "loses heat via thermal gas dispersion out to vacuum maps worth", w_pos: "is compressed by solar wind ram velocity pressures doing work of", w_neg: "performs work expanding outward over nightside cooling landscape terrains worth", dU_pos: "manifests an internal energy growth of", dU_neg: "manifests an internal energy retreat of" },
+            { sys: "jupiter cloud layer jet stream", q_pos: "absorbs heat from rising internal core gas convection plumes worth", q_neg: "loses heat radiating infrared bands to cold outer atmosphere space worth", w_pos: "is compressed by adjacent counter-rotating wind storm columns doing work of", w_neg: "does expansion work expanding outward flattening weather patterns worth", dU_pos: "secures an internal energy rise of", dU_neg: "secures an internal energy fall of" },
+            { sys: "supernova remnant expanding shell", q_pos: "gains energy from core collapse shockwave propagation tracks worth", q_neg: "loses heat energy via glowing expanding nebula emissions worth", w_pos: "is compressed by striking dense interstellar cold gas clouds doing work of", w_neg: "performs massive mechanical expansion work pushing out galactic space worth", dU_pos: "develops an internal energy expansion of", dU_neg: "develops an internal energy compression of" },
+            { sys: "cosmic dust grain ice mantle", q_pos: "absorbs background stellar starlight radiation spikes worth", q_neg: "loses heat radiating sub-Kelvin cosmic background bands worth", w_pos: "is compressed by high velocity atomic gas collision impacts doing work of", w_neg: "does micro-expansion work releasing desorbed gas molecules worth", dU_pos: "holds an internal energy increase of", dU_neg: "holds an internal energy decrease of" },
+            { sys: "saturn ring particle boulder", q_pos: "absorbs sunlight energy during its orbit dayside phase worth", q_neg: "loses heat radiating cooling rays when slipping into shadow worth", w_pos: "is compressed by collision contacts with neighboring icy debris doing work of", w_neg: "does expansion work releasing micro-fracture gas particles worth", dU_pos: "measures a net internal energy climb of", dU_neg: "measures a net internal energy drop of" },
+            { sys: "stellar flare magnetic loop core", q_pos: "gains thermal energy from twisting field line reconnections worth", q_neg: "loses heat energy via intense extreme ultraviolet emission beams worth", w_pos: "is compressed down by descending coronal plasma arcade loops doing work of", w_neg: "performs fast explosive work expanding out as coronal mass ejections worth", dU_pos: "reflects an internal energy addition of", dU_neg: "reflects an internal energy subtraction of" },
+            { sys: "titan methane lake surface layer", q_pos: "absorbs ambient infra-red planetary greenhouse heat worth", q_neg: "loses heat via overnight nitrogen wind convection tracks worth", w_pos: "is compressed by atmospheric gravity wave air pressures doing work of", w_neg: "does work expanding vapor volumes during seasonal cloud boiling phases worth", dU_pos: "shows an internal energy step-up of", dU_neg: "shows an internal energy step-down of" },
+            { sys: "black hole ergosphere accretion ring", q_pos: "gains heat from extreme frame-dragging material shear friction worth", q_neg: "loses energy via relativistic synchrotron jet escapes worth", w_pos: "is compressed intensely by immense gravitational tidal shear lines doing work of", w_neg: "does expansion work pushing material past outer photon sphere bounds worth", dU_pos: "undergoes an internal energy climb of", dU_neg: "undergoes an internal energy fall of" },
+            { sys: "orion nebula ionized hydrogen zone", q_pos: "absorbs ionizing radiation from embedded newborn massive stars worth", q_neg: "loses energy via forbidden optical line emission pathways worth", w_pos: "is compressed by expanding shock fronts from nearby hot star winds doing work of", w_neg: "performs thermal expansion work pushing cold molecular clouds back worth", dU_pos: "harbors a net internal energy elevation of", dU_neg: "harbors a net internal energy drop of" },
+            { sys: "exoplanet thermal atmosphere plume", q_pos: "absorbs extreme stellar wind shortwave energy bundles worth", q_neg: "loses heat radiating secondary thermal bands to space maps worth", w_pos: "is compressed by planetary dayside high-pressure jet streams doing work of", w_neg: "performs mechanical expansion work escaping out planetary gravity wells worth", dU_pos: "collects an internal energy expansion of", dU_neg: "collects an internal energy thinning of" },
+            { sys: "globular cluster core gas cloud", q_pos: "gains thermal energy from dynamic stellar stellar encounter shocks worth", q_neg: "loses heat energy radiating millimetric interstellar wave spectrums worth", w_pos: "is compressed by the combined gravitational core collapse attraction doing work of", w_neg: "does mechanical expansion work blowing outward from central stellar winds worth", dU_pos: "takes on a net internal energy gain of", dU_neg: "takes on a net internal energy deficit of" },
+            { sys: "cosmic string surrounding plasma matrix", q_pos: "absorbs exotic high-energy radiation from topological decays worth", q_neg: "loses energy via ultra-high frequency neutrino cooling paths worth", w_pos: "is compressed by spacetime metric conical tension lines doing work of", w_neg: "performs relativistic expansion work driving out ambient cosmic gas worth", dU_pos: "registers an internal energy change of positive", dU_neg: "registers an internal energy change of negative" },
+            { sys: "solar core radiative zone cell", q_pos: "absorbs thermal energy from internal hydrogen nuclear fusion chambers worth", q_neg: "loses heat via photon diffusion out to convective cell layers worth", w_pos: "is compressed by thousands of miles of overlying stellar weight columns doing work of", w_neg: "performs work expanding outwards against gravitational settling lines worth", dU_pos: "secures a net internal energy addition of", dU_neg: "secures a net internal energy reduction of" },
+
+            // Biological & Microfluidic Systems (131-150)
+            { sys: "mitochondrial membrane chamber", q_pos: "absorbs chemical energy from electron transport chain cascades worth", q_neg: "loses heat via thermal dissipation into cellular cytoplasm worth", w_pos: "is compressed compressed via high osmotic proton gradient forces doing work of", w_neg: "performs mechanical work driving rotating ATP synthase rotor units worth", dU_pos: "experiences an internal energy climb of", dU_neg: "experiences an internal energy decline of" },
+            { sys: "plant chloroplast stroma matrix", q_pos: "gains energy from captured solar light harvesting complexes worth", q_neg: "loses heat via non-photochemical fluorescence quenching loops worth", w_pos: "is compressed by osmotic turgor pressure changes in the leaf doing work of", w_neg: "does structural work expanding thylakoid membrane layers open worth", dU_pos: "yields a net internal energy addition of", dU_neg: "yields a net internal energy subtraction of" },
+            { sys: "cardiac muscle cell sarcomere", q_pos: "absorbs energy from calcium-activated ATP hydrolysis tracks worth", q_neg: "loses heat conducted to circulating capillary blood flow lines worth", w_pos: "is compressed stretched by blood filling the heart chamber doing work of", w_neg: "performs mechanical work contracting and pumping blood to aorta tracks worth", dU_pos: "accumulates an internal energy expansion of", dU_neg: "accumulates an internal energy thinning of" },
+            { sys: "microfluidic cell-sorting channel", q_pos: "gains heat from high frequency dielectrophoretic sorting fields worth", q_neg: "loses heat conducted to glass micro-chip backing plates worth", w_pos: "is compressed by high pressure carrier syringe fluid pumps doing work of", w_neg: "does work expanding out channel droplet shapes to redirect cell tracks worth", dU_pos: "registers an internal energy surge of", dU_neg: "registers an internal energy drop of" },
+            { sys: "deep-sea hyperthermophile cell", q_pos: "absorbs thermal energy from boiling volcanic vent mineral streams worth", q_neg: "loses heat to ambient deep trench benthic ocean flows worth", w_pos: "is compressed by extreme thousands-of-meters water columns doing work of", w_neg: "does mechanical work expanding cell walls to divide and replicate worth", dU_pos: "shows a total internal energy increase of", dU_neg: "shows a total internal energy decrease of" },
+            { sys: "synthetic protocell lipid bilayer", q_pos: "absorbs energy from hydrophobic micelle fusion processes worth", q_neg: "loses heat via thermal dissipation into bulk water buffers worth", w_pos: "is compressed by external micro-pipette suction clamp walls doing work of", w_neg: "performs mechanical work expanding its surface layout to grow pseudopods worth", dU_pos: "captures an internal energy addition of", dU_neg: "captures an internal energy loss of" },
+            { sys: "bacterial flagellar motor switch", q_pos: "gains heat from transmembrane electrochemical ion fluxes worth", q_neg: "loses heat energy via atomic friction to water surroundings worth", w_pos: "is compressed by local flagellar filament torque back-stresses doing work of", w_neg: "performs work spinning flagellar hooks to propel cells forward worth", dU_pos: "logs an internal energy rise of", dU_neg: "logs an internal energy drop of" },
+            { sys: "artificial lung oxygenation matrix", q_pos: "absorbs thermal energy from warm blood stream inflows worth", q_neg: "loses heat conduction to external metallic frame fixtures worth", w_pos: "is compressed by mechanical air ventilation bellows compression doing work of", w_neg: "performs work expanding capillary grid paths filtering out carbon dioxide worth", dU_pos: "manifests an internal energy growth of", dU_neg: "manifests an internal energy retreat of" },
+            { sys: "electric eel electrocyte cell pack", q_pos: "absorbs biochemical energy from acetylcholine vesicle releases worth", q_neg: "loses heat via passive water cooling thermal conduction fields worth", w_pos: "is compressed by external tail muscle compression swimming forces doing work of", w_neg: "does active work generating external high-voltage electric currents worth", dU_pos: "secures an internal energy rise of", dU_neg: "secures an internal energy fall of" },
+            { sys: "bioluminescent firefly lantern cell", q_pos: "absorbs chemical energy from luciferin oxidation pathways worth", q_neg: "loses energy emitting visible cool green photon wave pulses worth", w_pos: "is compressed by abdominal breathing air pump tube cycles doing work of", w_neg: "performs micro-mechanical work adjusting internal light organ crystal scales worth", dU_pos: "develops an internal energy expansion of", dU_neg: "develops an internal energy compression of" }
+        ];
+
+        // State Machine
+        let currentState = 'question';
+        let currentItem = null;
+        let unknownVar = ''; // 'dU', 'q', 'w'
+        let q_true = 0, w_true = 0, dU_true = 0;
+        let q_unit = '', w_unit = '', dU_unit = 'kJ';
+        let q_present = 0, w_present = 0, dU_present = 0;
+        let bothJoules = false;
+
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        function getRandomFloat(min, max) {
+            return parseFloat((Math.random() * (max - min) + min).toFixed(2));
+        }
+
+        function initGame() {
+            loadQuestion();
+            document.addEventListener('keydown', handleGlobalKeydown);
+            document.getElementById('interaction-prompt').addEventListener('click', triggerSolution);
+            document.getElementById('btn-yes').addEventListener('click', loadQuestion);
+            document.getElementById('btn-no').addEventListener('click', exitGame);
+        }
+
+        function loadQuestion() {
+            currentState = 'question';
+            document.getElementById('question-page').classList.add('active');
+            document.getElementById('answer-page').classList.remove('active');
+            document.getElementById('exit-page').classList.remove('active');
+
+            // Pick a unique scenario out of the 150 items
+            currentItem = systemsPool[Math.floor(Math.random() * systemsPool.length)];
+
+            // Choose signs randomly (+1 or -1) to systematically cover all 4 math quadrants
+            let qSign = Math.random() > 0.5 ? 1 : -1;
+            let wSign = Math.random() > 0.5 ? 1 : -1;
+
+            // Generate values in kJ (consistent math)
+            let absQ = getRandomFloat(5.0, 95.0);
+            let absW = getRandomFloat(5.0, 95.0);
+
+            q_true = qSign * absQ;
+            w_true = wSign * absW;
+            dU_true = q_true + w_true;
+
+            // Round values to match float expectations
+            q_true = parseFloat(q_true.toFixed(2));
+            w_true = parseFloat(w_true.toFixed(2));
+            dU_true = parseFloat(dU_true.toFixed(2));
+
+            // Select unknown type at random (1 out of 3 choices)
+            let unknownRand = getRandomInt(0, 2);
+            if (unknownRand === 0) unknownVar = 'dU';
+            else if (unknownRand === 1) unknownVar = 'q';
+            else unknownVar = 'w';
+
+            // Determine if both presentation units are Joules
+            bothJoules = Math.random() > 0.65;
+
+            // Assign presentation formatting strings
+            if (bothJoules) {
+                q_unit = 'J'; w_unit = 'J'; dU_unit = 'J';
+                q_present = Math.round(q_true * 1000);
+                w_present = Math.round(w_true * 1000);
+                dU_present = Math.round(dU_true * 1000);
+            } else {
+                // Randomly mix units if not both Joules
+                let q_mix = Math.random() > 0.5;
+                let w_mix = Math.random() > 0.5;
+                let dU_mix = Math.random() > 0.5;
+
+                q_unit = q_mix ? 'J' : 'kJ';
+                q_present = q_mix ? Math.round(q_true * 1000) : q_true;
+
+                w_unit = w_mix ? 'J' : 'kJ';
+                w_present = w_mix ? Math.round(w_true * 1000) : w_true;
+
+                dU_unit = dU_mix ? 'J' : 'kJ';
+                dU_present = dU_mix ? Math.round(dU_true * 1000) : dU_true;
+            }
+
+            // Construct localized text narrative dynamically
+            let sentence = `In an engineering experiment, a <b>${currentItem.sys}</b> `;
+            let partsText = [];
+
+            if (unknownVar !== 'q') {
+                let textQ = q_true > 0 ? currentItem.q_pos : currentItem.q_neg;
+                partsText.push(`${textQ} <span class="highlight-q">${Math.abs(q_present)} ${q_unit}</span>`);
+            }
+            if (unknownVar !== 'w') {
+                let textW = w_true > 0 ? currentItem.w_pos : currentItem.w_neg;
+                partsText.push(`${textW} <span class="highlight-w">${Math.abs(w_present)} ${w_unit}</span>`);
+            }
+            if (unknownVar !== 'dU') {
+                let textDU = dU_true > 0 ? currentItem.dU_pos : currentItem.dU_neg;
+                partsText.push(`${textDU} <span class="highlight-u">${Math.abs(dU_present)} ${dU_unit}</span>`);
+            }
+
+            // Join text pieces smoothly
+            sentence += partsText[0] + " and " + partsText[1] + ".";
+
+            // State explicit calculation challenge target
+            let targetString = '';
+            if (unknownVar === 'dU') {
+                targetString = `Calculate the total <b>change in internal energy (&Delta;U)</b> in kilojoules (kJ).`;
+            } else if (unknownVar === 'q') {
+                targetString = `Calculate the net <b>heat/energy change (q)</b> in kilojoules (kJ) and specify if it is absorbed or released.`;
+            } else {
+                targetString = `Calculate the net <b>work done (w)</b> in kilojoules (kJ) and state if work was performed on or by the system.`;
+            }
+
+            document.getElementById('question-text').innerHTML = `${sentence}<br><br>${targetString}`;
+        }
+
+        function handleGlobalKeydown(e) {
+            if (currentState === 'question') {
+                triggerSolution();
+            } else if (currentState === 'answer') {
+                if (e.key.toLowerCase() === 'y') loadQuestion();
+                if (e.key.toLowerCase() === 'n') exitGame();
+            }
+        }
+
+        function triggerSolution() {
+            if (currentState !== 'question') return;
+            currentState = 'answer';
+            document.getElementById('question-page').classList.remove('active');
+            document.getElementById('answer-page').classList.add('active');
+            
+            generateStepsCode();
+            document.getElementById('answer-page').scrollTop = 0;
+        }
+
+        function makeStepHTML(title, content, borderClass) {
+            return `
+                <div class="step-box ${borderClass}">
+                    <div class="step-title">${title}</div>
+                    <div class="step-content">${content}</div>
+                </div>
+            `;
+        }
+
+        // Generates clean padded layout blocks for paper-like vertical decimal operations
+        function createVerticalVisualizer(v1, v2, op, total) {
+            let s1 = Math.abs(v1).toFixed(2);
+            let s2 = Math.abs(v2).toFixed(2);
+            let sR = Math.abs(total).toFixed(2);
+            
+            let maxLen = Math.max(s1.length, s2.length, sR.length);
+            s1 = s1.padStart(maxLen, ' ');
+            s2 = s2.padStart(maxLen, ' ');
+            sR = sR.padStart(maxLen, ' ');
+            
+            let dividerLine = '-'.repeat(maxLen + 4);
+            let signPrefix = total < 0 ? '-' : '+';
+            
+            return `
+                <div class="vertical-math">
+   ${s1}
+ ${op} ${s2}
+ ${dividerLine}
+ ${signPrefix} ${sR}
+                </div>
+            `;
+        }
+
+        function generateStepsCode() {
+            let container = document.getElementById('steps-container');
+            let html = '';
+            let currentStep = 1;
+
+            // Step 1: Parsing variables from text tokens
+            html += `<div class="step-box border-info">
+                <div class="step-title">Step ${currentStep++}: Extract Values and Signs from Context</div>
+                <div class="step-content">
+                    Thermodynamic variables must follow precise directional sign rules:
+                    <ul>`;
+
+            if (unknownVar !== 'dU') {
+                let reason = dU_true > 0 ? "energy increased (+)" : "energy decreased (-)";
+                html += `<li><b>&Delta;U (Internal Energy Change):</b> Presented as ${Math.abs(dU_present)} ${dU_unit}. Since the text states the system '${dU_true > 0 ? currentItem.dU_pos : currentItem.dU_neg}', it acts mathematically as <b>${dU_true > 0 ? '+' : '-'}${Math.abs(dU_present)} ${dU_unit}</b> (${reason}).</li>`;
+            } else {
+                html += `<li><b>&Delta;U (Internal Energy Change):</b> This is our <b>UNKNOWN</b> variable to isolate and solve.</li>`;
+            }
+
+            if (unknownVar !== 'q') {
+                let reason = q_true > 0 ? "energy absorbed/gained (+)" : "energy released/lost (-)";
+                html += `<li><b>q (Heat/Energy Absorbed):</b> Presented as ${Math.abs(q_present)} ${q_unit}. Since the text states the system '${q_true > 0 ? currentItem.q_pos : currentItem.q_neg}', it acts mathematically as <b>${q_true > 0 ? '+' : '-'}${Math.abs(q_present)} ${q_unit}</b> (${reason}).</li>`;
+            } else {
+                html += `<li><b>q (Heat/Energy Transferred):</b> This is our <b>UNKNOWN</b> variable to isolate and solve.</li>`;
+            }
+
+            if (unknownVar !== 'w') {
+                let reason = w_true > 0 ? "work done ON the system (+)" : "work done BY the system (-)";
+                html += `<li><b>w (Work Done):</b> Presented as ${Math.abs(w_present)} ${w_unit}. Since the text states the system '${w_true > 0 ? currentItem.w_pos : currentItem.w_neg}', it acts mathematically as <b>${w_true > 0 ? '+' : '-'}${Math.abs(w_present)} ${w_unit}</b> (${reason}).</li>`;
+            } else {
+                html += `<li><b>w (Work Done):</b> This is our <b>UNKNOWN</b> variable to isolate and solve.</li>`;
+            }
+
+            html += `</ul></div></div>`;
+
+            // Setup working math tracking values
+            let calcDU = bothJoules ? Math.round(dU_true * 1000) : dU_true;
+            let calcQ = bothJoules ? Math.round(q_true * 1000) : q_true;
+            let calcW = bothJoules ? Math.round(w_true * 1000) : w_true;
+            let currentUnit = bothJoules ? 'J' : 'kJ';
+
+            // Step 2: Harmonize units if they are mixed
+            if (!bothJoules && (q_unit === 'J' || w_unit === 'J' || dU_unit === 'J')) {
+                html += `<div class="step-box border-info">
+                    <div class="step-title">Step ${currentStep++}: Standardize Mixed Units to kilojoules (kJ)</div>
+                    <div class="step-content">
+                        Since some variables are given in Joules (J), we convert them to kilojoules (kJ) by dividing by 1000 to maintain uniformity:
+                        <ul>`;
+                
+                if (unknownVar !== 'q' && q_unit === 'J') {
+                    let signedStr = q_true < 0 ? '-' : '+';
+                    html += `<li>Convert q: (${signedStr}${Math.abs(q_present)} J) &divide; 1000 = <b>${q_true} kJ</b></li>`;
+                }
+                if (unknownVar !== 'w' && w_unit === 'J') {
+                    let signedStr = w_true < 0 ? '-' : '+';
+                    html += `<li>Convert w: (${signedStr}${Math.abs(w_present)} J) &divide; 1000 = <b>${w_true} kJ</b></li>`;
+                }
+                if (unknownVar !== 'dU' && dU_unit === 'J') {
+                    let signedStr = dU_true < 0 ? '-' : '+';
+                    html += `<li>Convert &Delta;U: (${signedStr}${Math.abs(dU_present)} J) &divide; 1000 = <b>${dU_true} kJ</b></li>`;
+                }
+                html += `</ul>We will calculate the rest of the expression entirely using <b>kJ</b> units.</div></div>`;
+                calcDU = dU_true; calcQ = q_true; calcW = w_true;
+            } else if (bothJoules) {
+                html += `<div class="step-box border-info">
+                    <div class="step-title">Step ${currentStep++}: Standardize Units Check</div>
+                    <div class="step-content">Both given values are in Joules (J). We will execute the entire linear equation algebra using <b>Joules (J)</b> first, and convert the final result to kilojoules (kJ) at the very end.</div></div>`;
+            }
+
+            // Step 3: Write out First Law Template
+            html += `<div class="step-box border-u">
+                <div class="step-title">Step ${currentStep++}: Reference the First Law of Thermodynamics Formula</div>
+                <div class="step-content">
+                    The fundamental law states that the net change in internal energy is equal to final energy minus initial energy, which is the sum of energy absorbed and work done on the system:
+                    <div class="math-block">&Delta;U = U<sub>2</sub> - U<sub>1</sub> = q + w</div>
+                </div>
+            </div>`;
+
+            // Step 4: Substitute parameters inside brackets
+            let dU_str = unknownVar === 'dU' ? '&Delta;U' : `(${calcDU < 0 ? '' : '+'}${calcDU})`;
+            let q_str = unknownVar === 'q' ? 'q' : `(${calcQ < 0 ? '' : '+'}${calcQ})`;
+            let w_str = unknownVar === 'w' ? 'w' : `(${calcW < 0 ? '' : '+'}${calcW})`;
+
+            html += `<div class="step-box border-u">
+                <div class="step-title">Step ${currentStep++}: Substitute Known Values inside Brackets</div>
+                <div class="step-content">
+                    Placing our signed numerical parameters cleanly into the equation formula:
+                    <div class="math-block">${dU_str} = ${q_str} + ${w_str}</div>
+                </div>
+            </div>`;
+
+            // Step 5: Algebraic isolation and linear rule handling
+            if (unknownVar === 'dU') {
+                let opSign = calcW < 0 ? '-' : '+';
+                let signRuleText = calcW < 0 ? `"+(-)" = "-" (Plus of a minus number simplifies directly into subtraction)` : `"+(+)" = "+" (Plus of a plus number remains standard addition)`;
+                
+                html += `<div class="step-box border-info">
+                    <div class="step-title">Step ${currentStep++}: Simplify Operator Signs</div>
+                    <div class="step-content">
+                        Simplify the trailing bracket connection rule: ${signRuleText}.
+                        <div class="math-block">&Delta;U = ${calcQ} ${opSign} ${Math.abs(calcW)}</div>
+                    </div>
+                </div>`;
+            } 
+            else if (unknownVar === 'q') {
+                let opSign = calcW < 0 ? '-' : '+';
+                html += `<div class="step-box border-info">
+                    <div class="step-title">Step ${currentStep++}: Simplify Right-Side Sign Bracket</div>
+                    <div class="step-content">
+                        First, combine signs on the right side. ${calcW < 0 ? '"+(-)" becomes "-"' : '"+(+)" becomes "+"'} :
+                        <div class="math-block">${calcDU} = q ${opSign} ${Math.abs(calcW)}</div>
+                    </div>
+                </div>`;
+
+                let inverseSign = calcW < 0 ? '+' : '-';
+                let transText = calcW < 0 ? `To isolate 'q', move the negative value to the other side of the equals sign, changing its sign to addition (+)` : `To isolate 'q', move the positive value to the other side of the equals sign, changing its sign to subtraction (-)`;
+                
+                html += `<div class="step-box border-info">
+                    <div class="step-title">Step ${currentStep++}: Isolate the Unknown Variable (q)</div>
+                    <div class="step-content">
+                        ${transText}:
+                        <div class="math-block">q = ${calcDU} ${inverseSign} (${Math.abs(calcW)})</div>
+                    </div>
+                </div>`;
+            } 
+            else if (unknownVar === 'w') {
+                html += `<div class="step-box border-info">
+                    <div class="step-title">Step ${currentStep++}: Isolate the Unknown Variable (w)</div>
+                    <div class="step-content">
+                        To isolate 'w', transpose the heat term to the other side of the equals sign. Moving it causes its sign to flip:
+                        <div class="math-block">w = ${calcDU} - (${calcQ})</div>
+                    </div>
+                </div>`;
+
+                let signCombinationRule = calcQ < 0 ? `"-(-)" = "+"` : `"-(+)" = "-"`;
+                let explSign = calcQ < 0 ? "Minus of a minus becomes a plus!" : "Minus of a plus becomes subtraction.";
+                let finalOp = calcQ < 0 ? '+' : '-';
+
+                html += `<div class="step-box border-info">
+                    <div class="step-title">Step ${currentStep++}: Process Operator Double Signs</div>
+                    <div class="step-content">
+                        Apply integer subtraction rule: ${signCombinationRule} (${explSign}):
+                        <div class="math-block">w = ${calcDU} ${finalOp} ${Math.abs(calcQ)}</div>
+                    </div>
+                </div>`;
+            }
+
+            // Step 6: Decimal execution breakdown
+            let targetAns = unknownVar === 'dU' ? calcDU : (unknownVar === 'q' ? calcQ : calcW);
+            let n1 = 0, n2 = 0, finalOpChar = '+';
+            
+            if (unknownVar === 'dU') { n1 = calcQ; n2 = Math.abs(calcW); finalOpChar = calcW < 0 ? '-' : '+'; } 
+            else if (unknownVar === 'q') { n1 = calcDU; n2 = Math.abs(calcW); finalOpChar = calcW < 0 ? '+' : '-'; } 
+            else { n1 = calcDU; n2 = Math.abs(calcQ); finalOpChar = calcQ < 0 ? '+' : '-'; }
+
+            html += `<div class="step-box border-u">
+                <div class="step-title">Step ${currentStep++}: Align Decimals and Calculate</div>
+                <div class="step-content">
+                    Let's compute the arithmetic carefully. Align the columns vertically relative to the decimal point:
+                    ${createVerticalVisualizer(n1, n2, finalOpChar, targetAns)}
+                    <br>
+                    This results in: <b>${targetAns} ${currentUnit}</b>
+                </div>
+            </div>`;
+
+            // Step 7: Conversion to kJ if it was Joules
+            if (bothJoules) {
+                let finalKj = parseFloat((targetAns / 1000).toFixed(5));
+                html += `<div class="step-box border-info">
+                    <div class="step-title">Step ${currentStep++}: Convert Final Value to Required kilojoules (kJ)</div>
+                    <div class="step-content">
+                        Since our entire problem was calculated in Joules, we convert the final value into kilojoules by dividing by 1000:<br>
+                        <div class="math-block">${targetAns} J &divide; 1000 = <b>${finalKj} kJ</b></div>
+                    </div>
+                </div>`;
+            }
+
+            // Step 8: Dynamic physical interpretation conclusion
+            let trueFinalVal = unknownVar === 'dU' ? dU_true : (unknownVar === 'q' ? q_true : w_true);
+            let finalInterpretationText = '';
+
+            if (unknownVar === 'dU') {
+                finalInterpretationText = trueFinalVal > 0 ? 
+                    `The overall internal energy of the ${currentItem.sys} has <b>gained/increased</b> by ${Math.abs(trueFinalVal)} kJ.` : 
+                    `The overall internal energy of the ${currentItem.sys} has <b>lost/decreased</b> by ${Math.abs(trueFinalVal)} kJ.`;
+            } else if (unknownVar === 'q') {
+                finalInterpretationText = trueFinalVal > 0 ? 
+                    `Since q is positive (+), energy was net <b>absorbed/gained</b> by the ${currentItem.sys} from its surrounding environment.` : 
+                    `Since q is negative (-), energy was net <b>released/lost</b> by the ${currentItem.sys} out into the surroundings.`;
+            } else {
+                finalInterpretationText = trueFinalVal > 0 ? 
+                    `Since w is positive (+), mechanical work was net <b>performed ON</b> the ${currentItem.sys} by external forces.` : 
+                    `Since w is negative (-), mechanical work was net <b>performed BY</b> the ${currentItem.sys} pushing against its surroundings.`;
+            }
+
+            html += `<div class="conclusion">
+                🎯 Final Operational Summary:<br><br>
+                The calculated parameter value is <b>${trueFinalVal} kJ</b>.<br>
+                ${finalInterpretationText}
+            </div>`;
+
+            container.innerHTML = html;
+        }
+
+        function exitGame() {
+            currentState = 'exit';
+            document.getElementById('question-page').classList.remove('active');
+            document.getElementById('answer-page').classList.remove('active');
+            document.getElementById('exit-page').classList.add('active');
+            document.removeEventListener('keydown', handleGlobalKeydown);
+        }
+
+        window.onload = initGame;
+    </script>
+</body>
+</html>
