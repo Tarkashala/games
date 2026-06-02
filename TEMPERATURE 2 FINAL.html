@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Temperature Conversion Master Game: Kelvin Edition</title>
+    <style>
+        :root {
+            --bg-color: #f0f4f8;
+            --card-bg: #ffffff;
+            --primary-text: #2d3748;
+            --secondary-text: #4a5568;
+            --accent-celsius: #3182ce;
+            --accent-fahrenheit: #dd6b20;
+            --accent-kelvin: #805ad5; /* New Kelvin Purple */
+            --math-bg: #edf2f7;
+            --math-border: #cbd5e0;
+            --btn-y: #38a169;
+            --btn-y-hover: #2f855a;
+            --btn-n: #e53e3e;
+            --btn-n-hover: #c53030;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        #game-container {
+            width: 100%;
+            max-width: 900px;
+            background: var(--card-bg);
+            border-radius: 16px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            position: relative;
+            min-height: 600px;
+            max-height: 90vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        /* Page Views */
+        .page {
+            display: none;
+            padding: 40px;
+            flex: 1;
+            flex-direction: column;
+            animation: fadeIn 0.4s ease-in-out;
+            overflow-y: auto; /* Allows scrolling for longer step lists */
+        }
+        .page.active {
+            display: flex;
+        }
+        
+        /* Custom Scrollbar for steps page */
+        .page::-webkit-scrollbar { width: 8px; }
+        .page::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 4px; }
+        .page::-webkit-scrollbar-thumb { background: #cbd5e0; border-radius: 4px; }
+        .page::-webkit-scrollbar-thumb:hover { background: #a0aec0; }
+
+        /* Animations */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 0.8; }
+            50% { transform: scale(1.05); opacity: 1; }
+            100% { transform: scale(1); opacity: 0.8; }
+        }
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        /* Question Page */
+        .question-content {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+        .question-text {
+            font-size: 28px;
+            line-height: 1.5;
+            text-align: center;
+            margin-bottom: 50px;
+            font-weight: 500;
+        }
+        .highlight-c {
+            color: var(--accent-celsius);
+            font-weight: bold;
+            background: #ebf8ff;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .highlight-f {
+            color: var(--accent-fahrenheit);
+            font-weight: bold;
+            background: #feebc8;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .highlight-k {
+            color: var(--accent-kelvin);
+            font-weight: bold;
+            background: #faf5ff;
+            padding: 2px 8px;
+            border-radius: 6px;
+        }
+        .interaction-prompt {
+            text-align: center;
+            font-size: 18px;
+            color: var(--secondary-text);
+            animation: pulse 2s infinite;
+            cursor: pointer;
+            padding: 20px;
+            border: 2px dashed #cbd5e0;
+            border-radius: 12px;
+            user-select: none;
+            margin-top: 20px;
+        }
+
+        /* Answer Page */
+        .answer-header {
+            text-align: center;
+            font-size: 26px;
+            margin-bottom: 30px;
+            font-weight: bold;
+            color: var(--primary-text);
+            flex-shrink: 0;
+        }
+        
+        .steps-container {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+            margin-bottom: 30px;
+        }
+
+        .step-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+            align-items: center;
+            opacity: 0;
+            animation: slideInRight 0.4s forwards ease-out;
+        }
+        
+        /* Staggered animation delays for up to 10 steps */
+        .step-row:nth-child(1) { animation-delay: 0.1s; }
+        .step-row:nth-child(2) { animation-delay: 0.5s; }
+        .step-row:nth-child(3) { animation-delay: 0.9s; }
+        .step-row:nth-child(4) { animation-delay: 1.3s; }
+        .step-row:nth-child(5) { animation-delay: 1.7s; }
+        .step-row:nth-child(6) { animation-delay: 2.1s; }
+        .step-row:nth-child(7) { animation-delay: 2.5s; }
+        .step-row:nth-child(8) { animation-delay: 2.9s; }
+        .step-row:nth-child(9) { animation-delay: 3.3s; }
+        .step-row:nth-child(10) { animation-delay: 3.7s; }
+
+        .math-part {
+            background: var(--math-bg);
+            border: 1px solid var(--math-border);
+            padding: 15px 20px;
+            border-radius: 8px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 20px;
+            font-weight: bold;
+            text-align: right;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+
+        .text-part {
+            font-size: 18px;
+            color: var(--secondary-text);
+            padding: 15px;
+            border-left: 4px solid var(--math-border);
+            background: #fff;
+            border-radius: 0 8px 8px 0;
+        }
+        
+        .c-to-k-border { border-left-color: var(--accent-kelvin); }
+        .f-to-c-border { border-left-color: var(--accent-celsius); } /* Transitioning to Celsius first */
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 10px;
+            padding-top: 20px;
+            border-top: 2px dashed #edf2f7;
+            opacity: 0;
+            animation: fadeIn 0.5s forwards ease-in;
+        }
+
+        button {
+            border: none;
+            padding: 15px 40px;
+            font-size: 20px;
+            font-weight: bold;
+            color: white;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s, background 0.2s;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        button:active { transform: scale(0.95); }
+        
+        .btn-y { background: var(--btn-y); }
+        .btn-y:hover { background: var(--btn-y-hover); }
+        
+        .btn-n { background: var(--btn-n); }
+        .btn-n:hover { background: var(--btn-n-hover); }
+
+        .control-hint {
+            text-align: center;
+            font-size: 14px;
+            color: #718096;
+            margin-top: 10px;
+        }
+
+        /* Exit Page */
+        .exit-content {
+            display: flex;
+            flex: 1;
+            align-items: center;
+            justify-content: center;
+        }
+        .exit-message {
+            text-align: center;
+            font-size: 32px;
+            color: var(--primary-text);
+            line-height: 1.4;
+        }
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            .step-row {
+                grid-template-columns: 1fr;
+                gap: 5px;
+            }
+            .math-part {
+                text-align: center;
+                border-radius: 8px 8px 0 0;
+            }
+            .text-part {
+                border-left: none;
+                border-top: 4px solid var(--accent-kelvin);
+                border-radius: 0 0 8px 8px;
+                text-align: center;
+                margin-bottom: 15px;
+            }
+            .f-to-c-border { border-top-color: var(--accent-celsius); border-left-color: transparent;}
+            .c-to-k-border { border-top-color: var(--accent-kelvin); border-left-color: transparent;}
+            
+            .question-text { font-size: 22px; }
+            .math-part { font-size: 18px; }
+            .text-part { font-size: 16px; }
+            
+            .controls { flex-direction: column; }
+            button { width: 100%; }
+        }
+    </style>
+</head>
+<body>
+
+    <div id="game-container">
+        <div id="question-page" class="page active">
+            <div class="question-content">
+                <div class="question-text" id="question-text">
+                    Loading scenario...
+                </div>
+            </div>
+            <div class="interaction-prompt" id="interaction-prompt">
+                👆 Tap here or press ANY key to see the solution steps
+            </div>
+        </div>
+
+        <div id="answer-page" class="page">
+            <div class="answer-header" id="answer-header">Conversion Steps to Kelvin</div>
+            <div class="steps-container" id="steps-container">
+                </div>
+            <div class="controls" id="controls">
+                <div>
+                    <button class="btn-y" id="btn-yes">Y - Next Question</button>
+                    <div class="control-hint">Press 'Y' key</div>
+                </div>
+                <div>
+                    <button class="btn-n" id="btn-no">N - Exit</button>
+                    <div class="control-hint">Press 'N' key</div>
+                </div>
+            </div>
+        </div>
+
+        <div id="exit-page" class="page">
+            <div class="exit-content">
+                <div class="exit-message">
+                    🎉 Excellent work! <br><br> You are now a Kelvin Conversion Master!
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data: 158 Scenarios (Base list)
+        const baseScenarios = [
+            "A luxury hotel’s centralized climate system maintains guest rooms at X°C. Convert it into Fahrenheit for international visitors.",
+            "A hotel thermostat imported from the USA displays Y°F. Convert it into Celsius before adjusting the room temperature.",
+            "An imported air conditioner displays room cooling at Y°F. Convert it into Celsius to set a comfortable indoor temperature.",
+            "A smart home assistant recommends maintaining the bedroom at X°C for better sleep. Convert this recommendation into Fahrenheit.",
+            "After landing in Canada, a traveler hears that the outside temperature is X°C. Convert it into Fahrenheit to understand how cold the weather feels.",
+            "A tourist visiting Texas sees a roadside digital board displaying Y°F. Convert it into Celsius before deciding what clothes to wear.",
+            "A traveler compares Y°F in another country with winter temperatures experienced locally. Convert it into Celsius.",
+            "A traveler says that Y°F in another country feels similar to a cool evening in India. Convert it into Celsius and compare the climatic condition.",
+            "A garment label recommends ironing below X°C. Convert it into Fahrenheit.",
+            "A steam press imported from the USA displays Y°F. Convert it into Celsius.",
+            "A metro station maintains underground platform temperature at X°C. Convert it into Fahrenheit.",
+            "A railway air-conditioning unit imported from abroad shows Y°F. Convert it into Celsius.",
+            "A baking recipe from Europe instructs the chef to preheat the oven to X°C. Convert it into Fahrenheit for an American oven.",
+            "A microwave imported from the USA displays cooking temperature as Y°F. Convert it into Celsius before preparing food.",
+            "A freezer manual states that food should be stored below X°C. Convert this limit into Fahrenheit.",
+            "A refrigerator temperature sensor imported from America shows Y°F. Convert it into Celsius to check whether dairy products are safely stored.",
+            "Chocolate is tempered at X°C during manufacturing. Convert it into Fahrenheit.",
+            "A bakery oven imported from America displays Y°F. Convert it into Celsius.",
+            "Frozen food must remain below X°C during transportation. Convert it into Fahrenheit.",
+            "A refrigerated truck records its internal temperature as Y°F. Convert it into Celsius.",
+            "A greenhouse owner maintains crop temperature at X°C for healthy plant growth. Convert it into Fahrenheit for imported monitoring equipment.",
+            "An automated farming device from another country displays soil temperature as Y°F. Convert it into Celsius.",
+            "A poultry farm keeps chicks in an enclosure maintained at X°C. Convert this temperature into Fahrenheit.",
+            "A milk storage chamber shows Y°F on a foreign temperature controller. Convert it into Celsius to ensure freshness.",
+            "A craft brewery monitors the fermentation of ale at X°C. Convert it to Fahrenheit for an American brewmaster.",
+            "A winemaker imports a cellar temperature control system set to Y°F. Convert it to Celsius to ensure optimal aging of red wine.",
+            "A coffee roaster notes that the first crack of beans occurs at X°C. Convert this to Fahrenheit for a roasting log.",
+            "A tea sommelier recommends steeping green tea at Y°F. Convert it to Celsius for a Japanese tea house.",
+            "A candy maker boils sugar syrup to the 'hard crack' stage at X°C. Convert it into Fahrenheit for a traditional recipe.",
+            "A digital thermometer used in a clinic records a patient’s temperature as Y°F. Convert it into Celsius to determine whether the patient has fever.",
+            "A health report from another country states a body temperature of X°C. Convert it into Fahrenheit for an international medical database.",
+            "Parents are advised to keep bath water for an infant at X°C. Convert this temperature into Fahrenheit.",
+            "A baby-monitoring device imported from abroad displays nursery temperature as Y°F. Convert it into Celsius for proper room adjustment.",
+            "A veterinarian recommends keeping a pet recovery room at X°C. Convert it into Fahrenheit.",
+            "An imported pet incubator displays Y°F for newborn animals. Convert it into Celsius.",
+            "Biological samples are incubated at X°C. Convert it into Fahrenheit.",
+            "A foreign laboratory instrument displays chamber temperature as Y°F. Convert it into Celsius.",
+            "A pharmaceutical process requires maintaining chemicals at X°C. Convert it into Fahrenheit.",
+            "An imported sterilization chamber shows Y°F. Convert it into Celsius.",
+            "Researchers monitoring reptile eggs maintain incubation temperature at X°C. Convert it into Fahrenheit.",
+            "A wildlife monitoring system from another country records enclosure temperature as Y°F. Convert it into Celsius.",
+            "A forensic pathologist estimates the time of death based on a liver temperature of X°C. Convert it to Fahrenheit for a case report.",
+            "A pest control company uses heat treatment to eradicate bed bugs, raising the room temperature to Y°F. Convert this to Celsius for a Canadian client.",
+            "An infectious disease specialist ensures vaccines are kept strictly below X°C in the cold chain. Convert the upper limit to Fahrenheit.",
+            "An athletic trainer prepares a post-workout recovery ice bath at X°C for a marathon runner. Convert this to Fahrenheit.",
+            "A skincare cream must be stored below X°C. Convert it into Fahrenheit.",
+            "A cosmetic laboratory imported equipment displaying Y°F. Convert it into Celsius.",
+            "Concrete curing is most effective at X°C. Convert it into Fahrenheit for an international construction manual.",
+            "A road-construction temperature monitor shows asphalt temperature as Y°F. Convert it into Celsius.",
+            "Fire-resistant materials are tested at X°C before approval. Convert it into Fahrenheit.",
+            "An imported building sensor displays pipeline temperature as Y°F. Convert it into Celsius.",
+            "Engineers inspect rail expansion during temperatures of X°C. Convert it into Fahrenheit.",
+            "A track-monitoring device reports metal temperature as Y°F. Convert it into Celsius.",
+            "Underground mine temperature reaches X°C during excavation. Convert it into Fahrenheit.",
+            "A foreign mining sensor records tunnel temperature as Y°F. Convert it into Celsius.",
+            "Ore separation is carried out at X°C. Convert it into Fahrenheit.",
+            "A mineral refinery’s imported control panel shows Y°F. Convert it into Celsius.",
+            "Ink drying machines operate efficiently at X°C. Convert it into Fahrenheit.",
+            "An imported printing press displays machine temperature as Y°F. Convert it into Celsius.",
+            "Paper pulp processing occurs at X°C. Convert it into Fahrenheit.",
+            "A paper-drying chamber imported from another country displays Y°F. Convert it into Celsius.",
+            "A machine component must not exceed X°C during operation. Convert this limit into Fahrenheit for an overseas engineer.",
+            "A factory furnace imported from another country displays internal heat as Y°F. Convert it into Celsius.",
+            "Plastic sheets are softened at X°C before molding. Convert it into Fahrenheit.",
+            "A chemical processing unit shows Y°F on its control panel. Convert it into Celsius for local technicians.",
+            "Steam pipes in a thermal plant operate safely at X°C. Convert it into Fahrenheit.",
+            "A foreign monitoring console displays turbine temperature as Y°F. Convert it into Celsius.",
+            "Cloth dyeing is carried out at X°C for proper color absorption. Convert it into Fahrenheit.",
+            "A textile machine imported from another country displays drying temperature as Y°F. Convert it into Celsius.",
+            "A metallurgist heat-treats a steel alloy at Y°F to improve its tensile strength. Convert this to Celsius for a European manufacturing plant.",
+            "A glassblower works with molten silica at Y°F. Convert the furnace temperature to Celsius for international safety compliance.",
+            "An HVAC engineer balances a commercial building's duct system for an output of Y°F. Convert this to Celsius for an international blueprint.",
+            "A rubber manufacturing plant vulcanizes tires at Y°F. Convert this to Celsius for quality assurance testing.",
+            "A perfumer distills essential oils using a gentle heat of X°C to preserve volatile compounds. Convert this to Fahrenheit.",
+            "Water treatment tanks operate effectively at X°C. Convert it into Fahrenheit.",
+            "A purification sensor imported from abroad records Y°F. Convert it into Celsius.",
+            "Waste decomposition is monitored at X°C. Convert it into Fahrenheit.",
+            "A waste-processing unit displays internal temperature as Y°F. Convert it into Celsius.",
+            "A data center maintains servers at X°C to prevent overheating. Convert it into Fahrenheit.",
+            "An imported computer cooling system displays Y°F. Convert it into Celsius for local engineers.",
+            "A smartphone warns that battery temperature has reached Y°F. Convert it into Celsius.",
+            "A smart wearable tracks skin temperature at X°C. Convert it into Fahrenheit.",
+            "A gaming console automatically shuts down above X°C. Convert it into Fahrenheit.",
+            "A virtual reality processor imported from another country displays Y°F. Convert it into Celsius.",
+            "A flight simulator room is maintained at X°C for equipment stability. Convert it into Fahrenheit.",
+            "A cooling monitor in a gaming arena shows Y°F. Convert it into Celsius.",
+            "Financial servers operate safely below X°C. Convert it into Fahrenheit.",
+            "A foreign cooling system in a banking data center displays Y°F. Convert it into Celsius.",
+            "A PC hardware reviewer benchmarks a high-end CPU that peaks at Y°F under heavy load. Convert this to Celsius for their global audience.",
+            "A 3D printing enthusiast sets the extruder nozzle to X°C for PLA filament. Convert this to Fahrenheit for an online forum post.",
+            "Communication towers are designed to withstand temperatures up to X°C. Convert it into Fahrenheit.",
+            "A foreign monitoring station reports equipment heat as Y°F. Convert it into Celsius.",
+            "Scientists store liquefied gases at X°C. Convert it into Fahrenheit.",
+            "A cryogenic monitoring system displays Y°F. Convert it into Celsius.",
+            "Plasma experiments are conducted at X°C. Convert it into Fahrenheit.",
+            "An imported thermal analyzer reports Y°F. Convert it into Celsius.",
+            "Observatory equipment is calibrated at X°C. Convert it into Fahrenheit.",
+            "An imported telescope cooling system displays Y°F. Convert it into Celsius.",
+            "Scientists estimate planetary surface temperature as X°C. Convert it into Fahrenheit.",
+            "A foreign astronomy report mentions Y°F. Convert it into Celsius.",
+            "During a chemistry experiment, a solution must be heated to X°C. Convert it into Fahrenheit for a laboratory instrument calibrated differently.",
+            "A science journal records a reaction temperature of Y°F. Convert it into Celsius before plotting observations.",
+            "A teacher demonstrates thermal expansion at X°C and asks students to convert it into Fahrenheit.",
+            "A laboratory sensor in a foreign university displays Y°F during a heat experiment. Convert it into Celsius.",
+            "A weather forecast predicts snowfall when temperatures drop to X°C. Convert it into Fahrenheit for international viewers.",
+            "A US weather channel reports the afternoon temperature as Y°F. Convert it into Celsius for comparison with local climate reports.",
+            "A public safety department issues a heatwave warning at Y°F. Convert it into Celsius before broadcasting it internationally.",
+            "An environmental report states that a glacier region recorded X°C during winter. Convert it into Fahrenheit.",
+            "Scientists in Antarctica record atmospheric temperature as X°C. Convert it into Fahrenheit.",
+            "A polar survival device imported from another country displays Y°F. Convert it into Celsius.",
+            "Marine researchers record sea surface temperature as Y°F. Convert it into Celsius for environmental analysis.",
+            "River water near a hydroelectric plant is measured at X°C. Convert it into Fahrenheit.",
+            "Aquarium water for tropical fish is maintained at X°C. Convert it into Fahrenheit.",
+            "An imported aquarium heater shows Y°F. Convert it into Celsius.",
+            "A geothermal power plant extracts steam from the earth at Y°F. Convert this to Celsius for an engineering analysis.",
+            "A meteorologist calculates the dew point to be X°C on a humid morning. Convert this to Fahrenheit for a local news broadcast.",
+            "A physicist studies a superconductor that reaches zero resistance at X°C. Convert this critical temperature to Fahrenheit.",
+            "A geologist measures the temperature of a fresh lava flow at Y°F. Convert this to Celsius for a scientific journal.",
+            "Ancient manuscripts are preserved at X°C in museum storage rooms. Convert it into Fahrenheit.",
+            "A foreign preservation unit displays storage temperature as Y°F. Convert it into Celsius.",
+            "Archaeologists record desert excavation temperature as X°C. Convert it into Fahrenheit.",
+            "Imported preservation containers show Y°F. Convert it into Celsius.",
+            "A bank vault maintains document storage at X°C. Convert it into Fahrenheit.",
+            "An imported vault climate controller displays Y°F. Convert it into Celsius.",
+            "A car engine warning system indicates coolant temperature at Y°F. Convert it into Celsius to check for overheating.",
+            "Mechanics recommend maintaining engine oil performance below X°C. Convert this into Fahrenheit.",
+            "Aircraft engineers monitor cabin temperature at X°C during high-altitude flights. Convert it into Fahrenheit.",
+            "A spacecraft testing report records equipment temperature as Y°F. Convert it into Celsius.",
+            "A satellite component can safely function only up to X°C. Convert it into Fahrenheit.",
+            "Mission control receives spacecraft temperature data as Y°F. Convert it into Celsius.",
+            "Satellite transmitters function best below X°C. Convert it into Fahrenheit.",
+            "A satellite ground station displays Y°F during thermal monitoring. Convert it into Celsius.",
+            "Firefighters measure room temperature at X°C before entering a burning building. Convert it into Fahrenheit.",
+            "A rescue drone imported from another country reports fire-zone heat as Y°F. Convert it into Celsius.",
+            "Safety protocols require shutting down machinery above X°C. Convert it into Fahrenheit.",
+            "An emergency alarm system displays hazardous temperature as Y°F. Convert it into Celsius.",
+            "Military equipment is tested under desert conditions of X°C. Convert it into Fahrenheit.",
+            "A defense control panel displays ammunition storage temperature as Y°F. Convert it into Celsius.",
+            "Soldiers training in Arctic conditions experience temperatures of X°C. Convert it into Fahrenheit.",
+            "A foreign military weather report mentions Y°F. Convert it into Celsius for briefing purposes.",
+            "A movie studio maintains indoor shooting conditions at X°C. Convert it into Fahrenheit.",
+            "Imported lighting equipment displays operating temperature as Y°F. Convert it into Celsius.",
+            "Event organizers maintain audience halls at X°C for comfort. Convert it into Fahrenheit.",
+            "A stage smoke machine imported from another country displays internal heat as Y°F. Convert it into Celsius.",
+            "A swimming coach maintains pool water at X°C for training sessions. Convert it into Fahrenheit.",
+            "A sports complex imported a heating system displaying Y°F. Convert it into Celsius before adjusting pool temperature.",
+            "A fitness center keeps workout rooms at X°C for comfort. Convert it into Fahrenheit.",
+            "A treadmill’s climate-control display shows Y°F. Convert it into Celsius.",
+            "A mountain expedition guide warns trekkers that the nighttime temperature may fall to X°C. Express this temperature in Fahrenheit for foreign participants.",
+            "During a desert safari in Arizona, tourists are informed that the daytime temperature may reach Y°F. Convert it into Celsius to compare it with temperatures back home.",
+            "A thermometer scale in a puzzle displays Y°F. Determine the corresponding Celsius temperature.",
+            "A science competition asks students to convert X°C into Fahrenheit without using a calculator.",
+            "During a classroom survey, students compare temperatures recorded in X°C and their equivalents in Fahrenheit to study international measurement systems.",
+            "At what temperature will the Celsius and Fahrenheit scales show the same numerical value? Let's verify by converting X°C.",
+            "Find the temperature at which a thermometer calibrated in Celsius gives the same reading as one calibrated in Fahrenheit by checking Y°F.",
+            "During a science exhibition, students compare X°C and its Fahrenheit equivalent to understand differences between temperature scales.",
+            "Solar panels are tested under temperatures of X°C. Convert this reading into Fahrenheit.",
+            "A battery storage unit in a renewable energy station records Y°F. Convert it into Celsius."
+        ];
+
+        let currentState = 'question'; 
+        let currentType = ''; // 'CtoK' or 'FtoK'
+        let currentVal = 0;
+
+        // UI Elements
+        const questionPage = document.getElementById('question-page');
+        const answerPage = document.getElementById('answer-page');
+        const exitPage = document.getElementById('exit-page');
+        const questionText = document.getElementById('question-text');
+        const stepsContainer = document.getElementById('steps-container');
+        const interactionPrompt = document.getElementById('interaction-prompt');
+        const controlsDiv = document.getElementById('controls');
+
+        // Random Integer Generator
+        function getRandomInt(min, max) {
+            return Math.floor(Math.random() * (max - min + 1)) + min;
+        }
+
+        // Convert target keywords to Kelvin dynamically
+        function formatScenarioForKelvin(scenarioStr) {
+            return scenarioStr
+                .replace(/into Fahrenheit/gi, 'into Kelvin')
+                .replace(/into Celsius/gi, 'into Kelvin')
+                .replace(/to Fahrenheit/gi, 'to Kelvin')
+                .replace(/to Celsius/gi, 'to Kelvin')
+                .replace(/in Fahrenheit/gi, 'in Kelvin')
+                .replace(/in Celsius/gi, 'in Kelvin')
+                .replace(/Celsius temperature/gi, 'Kelvin temperature')
+                .replace(/Fahrenheit equivalent/gi, 'Kelvin equivalent');
+        }
+
+        function initGame() {
+            loadQuestion();
+            document.addEventListener('keydown', handleGlobalKeydown);
+            interactionPrompt.addEventListener('click', triggerAnswer);
+            document.getElementById('btn-yes').addEventListener('click', loadQuestion);
+            document.getElementById('btn-no').addEventListener('click', exitGame);
+        }
+
+        function loadQuestion() {
+            // Reset Pages
+            questionPage.classList.add('active');
+            answerPage.classList.remove('active');
+            exitPage.classList.remove('active');
+            currentState = 'question';
+
+            // Pick Scenario
+            const rawScenario = baseScenarios[Math.floor(Math.random() * baseScenarios.length)];
+            
+            // Re-target to Kelvin
+            let formattedScenario = formatScenarioForKelvin(rawScenario);
+
+            // Determine type and generate values
+            if (rawScenario.includes('X')) {
+                currentType = 'CtoK';
+                currentVal = getRandomInt(-273, 500);
+                formattedScenario = formattedScenario.replace(/X°C/g, `<span class="highlight-c">${currentVal}°C</span>`);
+                formattedScenario = formattedScenario.replace(/X/g, `<span class="highlight-c">${currentVal}</span>`); 
+            } else if (rawScenario.includes('Y')) {
+                currentType = 'FtoK';
+                currentVal = getRandomInt(-459, 932);
+                formattedScenario = formattedScenario.replace(/Y°F/g, `<span class="highlight-f">${currentVal}°F</span>`);
+                formattedScenario = formattedScenario.replace(/Y/g, `<span class="highlight-f">${currentVal}</span>`); 
+            } else {
+                currentType = 'CtoK';
+                currentVal = getRandomInt(0, 100);
+                formattedScenario += ` <br><br>(Let's use <span class="highlight-c">${currentVal}°C</span> to convert to Kelvin)`;
+            }
+
+            questionText.innerHTML = formattedScenario;
+        }
+
+        function handleGlobalKeydown(e) {
+            if (currentState === 'question') {
+                triggerAnswer();
+            } else if (currentState === 'answer') {
+                if (e.key.toLowerCase() === 'y') {
+                    loadQuestion();
+                } else if (e.key.toLowerCase() === 'n') {
+                    exitGame();
+                }
+            }
+        }
+
+        function triggerAnswer() {
+            if (currentState !== 'question') return;
+            currentState = 'answer';
+            questionPage.classList.remove('active');
+            answerPage.classList.add('active');
+            generateSteps();
+            
+            // Adjust delay for controls based on number of steps
+            const totalSteps = stepsContainer.children.length;
+            const delayInSeconds = (totalSteps * 0.4) + 0.5;
+            controlsDiv.style.animationDelay = `${delayInSeconds}s`;
+            
+            // Scroll to top of answer page
+            answerPage.scrollTop = 0;
+        }
+
+        function createStepHTML(mathHtml, textHtml, cssClass = '') {
+            return `
+                <div class="step-row">
+                    <div class="math-part">${mathHtml}</div>
+                    <div class="text-part ${cssClass}">${textHtml}</div>
+                </div>
+            `;
+        }
+
+        function generateSteps() {
+            stepsContainer.innerHTML = '';
+            let htmlStr = '';
+
+            if (currentType === 'CtoK') {
+                // Celsius to Kelvin Logic
+                const C = currentVal;
+                const finalK = (C + 273.15).toFixed(2).replace(/\.00$/, ''); // Keep clean integer if .00
+
+                htmlStr += createStepHTML(`K = C + 273.15`, `To convert Celsius to Kelvin, we simply add 273.15.`, 'c-to-k-border');
+                htmlStr += createStepHTML(`K = [<span class="highlight-c">${C}</span>] + 273.15`, `Substitute your Celsius value, ${C}, into the formula.`, 'c-to-k-border');
+                htmlStr += createStepHTML(`K = <span class="highlight-k">${finalK}</span>`, `Add them together to get your final Kelvin temperature!`, 'c-to-k-border');
+
+            } else {
+                // Fahrenheit to Kelvin Logic (F -> C -> K)
+                const F = currentVal;
+                const sub32 = F - 32;
+                const mul5 = sub32 * 5;
+                const C = (mul5 / 9);
+                const finalC = C.toFixed(2).replace(/\.00$/, '');
+                const finalK = (C + 273.15).toFixed(2).replace(/\.00$/, '');
+
+                // Step 1: F -> C
+                htmlStr += createStepHTML(`C = (F - 32) &times; 5/9`, `<b>Part 1:</b> Let's convert Fahrenheit to Celsius first.`, 'f-to-c-border');
+                htmlStr += createStepHTML(`C = (<span class="highlight-f">${F}</span> - 32) &times; 5/9`, `Substitute your Fahrenheit value, ${F}, into the brackets.`, 'f-to-c-border');
+                htmlStr += createStepHTML(`C = ${sub32} &times; 5/9`, `Subtract 32 from the Fahrenheit value.`, 'f-to-c-border');
+                htmlStr += createStepHTML(`C = ${mul5} / 9`, `Multiply the result by 5.`, 'f-to-c-border');
+                htmlStr += createStepHTML(`C = <span class="highlight-c">${finalC}</span>`, `Divide by 9 to get the intermediate Celsius temperature.`, 'f-to-c-border');
+                
+                // Step 2: C -> K
+                htmlStr += createStepHTML(`K = C + 273.15`, `<b>Part 2:</b> Now, convert that Celsius value to Kelvin.`, 'c-to-k-border');
+                htmlStr += createStepHTML(`K = [<span class="highlight-c">${finalC}</span>] + 273.15`, `Substitute the Celsius value we just found into the formula.`, 'c-to-k-border');
+                htmlStr += createStepHTML(`K = <span class="highlight-k">${finalK}</span>`, `Add 273.15 to find the final Kelvin temperature!`, 'c-to-k-border');
+            }
+
+            stepsContainer.innerHTML = htmlStr;
+        }
+
+        function exitGame() {
+            currentState = 'exit';
+            answerPage.classList.remove('active');
+            exitPage.classList.add('active');
+            document.removeEventListener('keydown', handleGlobalKeydown);
+        }
+
+        // Start Game
+        window.onload = initGame;
+    </script>
+</body>
+</html>
